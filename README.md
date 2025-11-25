@@ -81,6 +81,3 @@ Hệ thống được chia thành hai phần chính: Frontend (giao diện ngư�
     ```
 
 5.  **Mở trình duyệt và truy cập vào địa chỉ `http://localhost:8501` để xem ứng dụng.**
-
----
-*Lưu ý: Hiện tại, tất cả các phản hồi của chatbot đều được giả lập trong file `demo/frontend/logic/api_client.py`. Để có chức năng dự đoán thật, cần phải triển khai backend và mô hình Machine Learning.*
