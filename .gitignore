@@ -9,4 +9,10 @@
 /.idea/navEditor.xml
 /.idea/assetWizardSettings.xml
 __pycache__/
+
+# Virtual environment
+.myVenv/
 .env
+
+# Streamlit
+.streamlit/
