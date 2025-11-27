@@ -5,7 +5,7 @@
     bottom: 0;
     left: 0;
     width: 100%;
-    height: 320px;
+    height: 300px;
     background: linear-gradient(160deg, #0f182c, #111f3a);
     border-top: 1px solid rgba(255, 255, 255, 0.06);
     z-index: 2000;
@@ -74,15 +74,20 @@
 
 /* --- WHEN DRAWER IS OPEN: push chat input up --- */
 body:has(#form-anchor) [data-testid="stBottom"] {
-    bottom: 330px !important;
+    bottom: 320px !important;
 }
 
 body:has(#form-anchor) [data-testid="stHorizontalBlock"]:has(#fix-chat-button) {
-    bottom: 330px !important;
+    bottom: 320px !important;
 }
 
 body:has(#form-anchor) .main .block-container {
-    padding-bottom: 480px !important;
+    padding-bottom: 560px !important;
+}
+
+/* Đẩy vùng chat lên cao hơn khi form mở để không bị che */
+body:has(#form-anchor) .chat-shell {
+    margin-bottom: 240px;
 }
 
 /* Dropdown height */

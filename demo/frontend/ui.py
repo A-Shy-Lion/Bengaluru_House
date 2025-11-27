@@ -24,6 +24,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
+
 # --- LOAD CSS ---
 def load_css(file_path: Path) -> None:
     try:
@@ -48,6 +49,11 @@ st.session_state.setdefault("last_prediction", None)
 st.session_state.setdefault("status_text", "Sẵn sàng")
 st.session_state.setdefault("history_loaded", False)
 st.session_state.setdefault("api_base", os.getenv("API_BASE_URL", DEFAULT_API_BASE))
+st.session_state.setdefault("form_memory", {})
+st.session_state.setdefault("pending_form_message", None)
+# Nếu trước đây đang dùng đường dẫn tương đối /api (không proxy), chuyển sang localhost mặc định
+if st.session_state.api_base == "/api":
+    st.session_state.api_base = "http://localhost:5000/api"
 
 api_client = ApiClient(st.session_state.api_base)
 
@@ -84,6 +90,7 @@ def handle_chat(user_input: str) -> None:
     if not user_input:
         return
 
+    set_status("Đang gửi tới backend...")
     st.session_state.messages.append({"role": "user", "content": user_input})
     with st.spinner("AI đang suy nghĩ..."):
         try:
@@ -173,7 +180,6 @@ chat_container = st.container()
 
 if is_landing_page:
     with chat_container:
-        st.markdown('<div class="chat-shell hero-shell">', unsafe_allow_html=True)
         st.markdown('<h1 class="welcome-title">Xin chào! <br> Bạn muốn biết thông tin gì?</h1>', unsafe_allow_html=True)
         st.markdown('<p class="welcome-subtitle">Sử dụng gợi ý nhanh hoặc nhập câu hỏi bên dưới để khởi tạo phân tích</p>', unsafe_allow_html=True)
 
@@ -186,7 +192,6 @@ if is_landing_page:
 
 else:
     with chat_container:
-        st.markdown('<div class="chat-shell">', unsafe_allow_html=True)
         st.markdown('<div style="height: 20px;"></div>', unsafe_allow_html=True)
         for message in st.session_state.messages:
             msg_class = "st-chat-message-user" if message["role"] == "user" else "st-chat-message-assistant"
@@ -285,14 +290,26 @@ if st.session_state.show_form:
         form_data = show_input_form(locations_list)
 
         if form_data:
-            user_msg = (
-                f"Dữ liệu dự đoán: location={form_data['location']}, "
-                f"total_sqft={form_data['total_sqft']}, bath={form_data['bath']}, bhk={form_data['bhk']}. "
-                "Hãy xử lý và tiếp tục hội thoại."
-            )
-            st.session_state.show_form = False
-            handle_chat(user_msg)
-            st.rerun()
+            missing = [k for k, v in form_data.items() if v in (None, "")]
+            if missing:
+                st.warning("Vui lòng điền đầy đủ thông tin trước khi gửi.")
+            else:
+                # Lưu để prefill lần sau
+                st.session_state.form_memory = form_data
+                st.session_state.pending_form_message = (
+                    f"Du lieu du doan: location={form_data['location']}, "
+                    f"total_sqft={form_data['total_sqft']}, bath={form_data['bath']}, bhk={form_data['bhk']}. "
+                    "Hay xu ly va tiep tuc hoi thoai."
+                )
+                st.session_state.show_form = False
+                st.rerun()
+
+# Nếu có tin nhắn form chờ gửi, gửi sau khi form đã ẩn
+if st.session_state.pending_form_message:
+    msg = st.session_state.pending_form_message
+    st.session_state.pending_form_message = None
+    handle_chat(msg)
+    st.rerun()
 
 if prompt:
     handle_chat(prompt)

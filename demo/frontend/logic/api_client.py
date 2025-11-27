@@ -6,8 +6,8 @@ from typing import Any, Dict, List, Optional
 
 import requests
 
-# Prefer explicit API_BASE_URL env; fallback to same-origin /api for deploy, localhost for dev.
-DEFAULT_API_BASE = os.getenv("API_BASE_URL", "/api")
+# Prefer explicit API_BASE_URL env; fallback to localhost:5000/api (consistent với bản HTML demo).
+DEFAULT_API_BASE = os.getenv("API_BASE_URL", "http://localhost:5000/api")
 
 
 @dataclass

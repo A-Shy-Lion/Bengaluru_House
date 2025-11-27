@@ -27,7 +27,8 @@ THÔNG TIN CẦN HỎI:
 
 HƯỚNG DẪN TRẢ LỜI:
 - Nếu thiếu bất kỳ trường nào, hãy hỏi thêm để lấy đủ.
-- Khi đã đủ 4 trường, tóm tắt ngắn gọn các giá trị người dùng cung cấp và cho biết sẽ gửi sang mô hình để dự đoán giá."""
+- Khi đã đủ 4 trường, tóm tắt ngắn gọn các giá trị người dùng cung cấp và cho biết sẽ gửi sang mô hình để dự đoán giá.
+- Phân tích kỹ trước khi trả lời, tránh bỏ sót thông tin."""
 
 
 def _get_env_float(name: str, default: float) -> float:
