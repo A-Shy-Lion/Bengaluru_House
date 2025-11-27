@@ -1,0 +1,13 @@
+pandas
+numpy
+scikit-learn
+joblib
+matplotlib
+seaborn
+flask
+flask-cors
+google-generativeai
+python-dotenv
+# --- Frontend ---
+streamlit
+requests
