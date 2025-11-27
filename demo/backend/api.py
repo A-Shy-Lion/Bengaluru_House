@@ -4,15 +4,17 @@ import os
 from pathlib import Path
 
 from dotenv import load_dotenv
-from flask import Flask
+from flask import Flask, redirect
 from flask_cors import CORS
 
 # Load environment variables from project root and local backend .env
-BASE_DIR = Path(__file__).resolve().parent.parent
-load_dotenv(BASE_DIR / ".env")
+ROOT_DIR = Path(__file__).resolve().parents[2]
+DEMO_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(ROOT_DIR / ".env")
+load_dotenv(DEMO_DIR / ".env", override=True)
 load_dotenv(Path(__file__).resolve().parent / ".env", override=True)
 
-from routes.chat_routes import chat_bp
+from .routes.chat_routes import chat_bp
 
 
 def create_app() -> Flask:
@@ -20,6 +22,12 @@ def create_app() -> Flask:
     # Allow all origins for local testing; tighten in prod.
     CORS(app, resources={r"/*": {"origins": "*"}})
     app.register_blueprint(chat_bp)
+
+    @app.route("/")
+    def root():
+        # Redirect g?p Streamlit UI (mac dinh http://localhost:8501)
+        frontend_url = os.getenv("FRONTEND_URL", "http://localhost:8501")
+        return redirect(frontend_url)
 
     @app.after_request
     def add_cors_headers(response):

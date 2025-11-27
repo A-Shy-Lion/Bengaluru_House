@@ -1,32 +1,60 @@
-import time
-# import requests # Sẽ dùng khi nối backend thật
+from __future__ import annotations
 
-# URL của Backend (Sẽ dùng sau này)
-BACKEND_URL = "http://localhost:8000/chat" 
+import os
+from dataclasses import dataclass
+from typing import Any, Dict, List, Optional
 
-def get_bot_response(user_input):
-    """
-    Hàm gửi request sang Backend để lấy phản hồi.
-    Hiện tại đang MOCK (giả lập) dữ liệu.
-    """
-    # --- MÔ PHỎNG GỌI API ---
-    # TODO (Sau này): Thay bằng code gọi requests.post thật
-    # try:
-    #     response = requests.post(BACKEND_URL, json={"msg": user_input}, timeout=10)
-    #     response.raise_for_status()
-    #     return response.json().get("response", "Lỗi format từ server.")
-    # except Exception as e:
-    #     return f"Không thể kết nối đến server backend. Chi tiết: {str(e)}"
+import requests
 
-    # --- LOGIC GIẢ LẬP TẠM THỜI ---
-    time.sleep(0.8) # Giả lập độ trễ mạng nhẹ
-    
-    input_lower = user_input.lower()
-    if "giá" in input_lower:
-        return "Để tôi giúp bạn định giá. Vui lòng cho biết khu vực và diện tích căn nhà?"
-    elif "email" in input_lower or "viết" in input_lower:
-        return "Chắc chắn rồi, tôi có thể giúp bạn soạn thảo nội dung. Bạn cần viết về chủ đề gì?"
-    elif "kỹ thuật" in input_lower or "ai" in input_lower:
-        return "Về mặt kỹ thuật, tôi sử dụng mô hình ngôn ngữ lớn (LLM) kết hợp với dữ liệu được huấn luyện riêng về bất động sản Bengaluru để đưa ra câu trả lời."
-    else:
-        return "Chào bạn! Tôi là trợ lý AI. Hãy chọn một trong các gợi ý trên màn hình hoặc nhập câu hỏi của bạn bên dưới nhé."
+DEFAULT_API_BASE = os.getenv("API_BASE_URL", "http://localhost:5000/api")
+
+
+@dataclass
+class ChatResponse:
+    session_id: str
+    reply: str
+    history: List[Dict[str, Any]]
+    detected_fields: Dict[str, Any]
+    prediction: Optional[float] = None
+
+
+class ApiClient:
+    """Thin wrapper gọi API Flask /api/*."""
+
+    def __init__(self, base_url: str | None = None) -> None:
+        self.base_url = (base_url or DEFAULT_API_BASE).rstrip("/")
+
+    def _handle_response(self, resp: requests.Response) -> Dict[str, Any]:
+        try:
+            data = resp.json()
+        except Exception:
+            resp.raise_for_status()
+            return {}
+        if not resp.ok:
+            raise RuntimeError(data.get("error") or resp.text)
+        return data
+
+    def chat(self, message: str, session_id: Optional[str] = None) -> ChatResponse:
+        payload: Dict[str, Any] = {"message": message}
+        if session_id:
+            payload["session_id"] = session_id
+        resp = requests.post(f"{self.base_url}/chat", json=payload, timeout=20)
+        data = self._handle_response(resp)
+        return ChatResponse(
+            session_id=data.get("session_id", session_id or ""),
+            reply=data.get("reply", ""),
+            history=data.get("history") or [],
+            detected_fields=data.get("detected_fields") or {},
+            prediction=data.get("prediction"),
+        )
+
+    def fetch_history(self, session_id: str) -> ChatResponse:
+        resp = requests.get(f"{self.base_url}/chat/{session_id}", timeout=10)
+        data = self._handle_response(resp)
+        return ChatResponse(
+            session_id=data.get("session_id", session_id),
+            reply=data.get("reply", ""),
+            history=data.get("history") or [],
+            detected_fields=data.get("detected_fields") or {},
+            prediction=data.get("prediction"),
+        )

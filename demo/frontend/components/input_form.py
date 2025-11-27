@@ -53,8 +53,8 @@ def show_input_form(locations_list):
         if submitted:
             return {
                 "location": selected_loc,
-                "sqft": sqft,
+                "total_sqft": sqft,
                 "bhk": bhk,
-                "bath": bath
+                "bath": bath,
             }
     return None

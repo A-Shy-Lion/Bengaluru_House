@@ -3,9 +3,9 @@ from __future__ import annotations
 import asyncio
 from flask import Blueprint, jsonify, request
 
-from services.llm_service import llm_service
-from services.house_price_service import house_price_service
-from storage.local_storage import conversation_store, house_store
+from backend.services.llm_service import llm_service
+from backend.services.house_price_service import house_price_service
+from backend.storage.local_storage import conversation_store, house_store
 
 chat_bp = Blueprint("chat", __name__)
 
