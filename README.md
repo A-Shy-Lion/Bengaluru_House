@@ -1,83 +1,110 @@
 # Bengaluru House Price Prediction Chatbot
 
-Dự án này là một ứng dụng web demo được xây dựng bằng Streamlit, cung cấp một giao diện chatbot để dự đoán giá nhà tại Bengaluru. Người dùng có thể tương tác với AI thông qua chat hoặc điền vào một biểu mẫu chi tiết để nhận được ước tính giá.
+Ứng dụng demo dự đoán giá nhà tại Bengaluru với giao diện chatbot. Frontend dùng Streamlit, backend dùng Flask, có thể kết nối Gemini. Khi đủ thông tin (location, total_sqft, bath, bhk) backend gọi mô hình tuyến tính đã huấn luyện để trả về giá dự đoán (đơn vị lakh) và lưu lịch sử/record vào file JSON cục bộ.
 
-## ✨ Tính năng chính
+## Kiến trúc & mã nguồn chính (gọn)
 
-- **Giao diện Chatbot tương tác**: Giao diện chính cho phép người dùng đặt câu hỏi bằng ngôn ngữ tự nhiên.
-- **Gợi ý nhanh (Quick Prompts)**: Cung cấp các thẻ gợi ý trực quan trên màn hình chính để người dùng bắt đầu cuộc trò chuyện một cách dễ dàng.
-- **Biểu mẫu nhập liệu chi tiết**: Một biểu mẫu dạng "ngăn kéo" (drawer) cho phép người dùng nhập các thông số cụ thể như diện tích, số phòng ngủ, số phòng tắm và vị trí để có dự đoán chính xác hơn.
-- **Thiết kế giao diện tùy chỉnh**: Sử dụng CSS để tạo ra một giao diện hiện đại, sạch sẽ và thân thiện với người dùng, vượt ra ngoài các thành phần mặc định của Streamlit.
-- **Kiến trúc mô-đun hóa**: Code được tổ chức thành các thành phần (components), logic và styles riêng biệt để dễ dàng bảo trì và mở rộng.
+| Thành phần | Vai trò |
+| --- | --- |
+| `demo/app.py` | Khởi động song song Flask API (port 10000) và Streamlit UI (port 10001, tự dời nếu trùng); đọc `API_HOST`/`API_PORT`/`UI_HOST`/`UI_PORT`/`STREAMLIT_PORT`, đặt `FRONTEND_URL` cho redirect. |
+| `demo/backend/api.py` | Tạo Flask app, bật CORS, load `.env` (gốc, `demo/.env`, `demo/backend/.env`), redirect về `FRONTEND_URL` nếu có. |
+| `demo/backend/routes/chat_routes.py` | Endpoint: `POST /api/chat`, `GET /api/chat/<session_id>`, `POST /api/house/predict`, `GET /health`; trích trường, gọi LLM, gọi mô hình dự đoán, lưu lịch sử. |
+| `demo/backend/services/llm_service.py` | Gọi Gemini theo biến `GEMINI_*`; nếu thiếu API key sẽ trả lời giả lập để dev test. |
+| `demo/backend/services/house_price_service.py` | Nạp `models/linear_regression_BengaluruHouse.pkl` và `models/preprocessor.pkl`, biến đổi input, trả giá dự đoán. |
+| `demo/backend/storage/local_storage.py` | Lưu lịch sử chat và record dự đoán ra JSON trong thư mục backend. |
+| `demo/frontend/ui.py` | Giao diện chat Streamlit (quick prompts, form thu gọn, avatar); nhập `API_BASE_URL`; đồng bộ lịch sử theo `session_id`. |
+| `demo/frontend/components/quick_prompts.py` | Thẻ gợi ý hội thoại mẫu. |
+| `demo/frontend/components/input_form.py` | Form nhập location/total_sqft/BHK/bath và đẩy vào chat. |
+| `demo/frontend/logic/api_client.py` | Client REST gọi `POST /api/chat` và `GET /api/chat/<session_id>`. |
+| `demo/frontend/styles/` | CSS tùy chỉnh cho Streamlit (bỏ qua `index.html` demo tĩnh). |
+| `src/preprocessing.py`, `src/modeling.py`, `src/predict.py` | Xử lý dữ liệu, huấn luyện, hàm dự đoán dùng chung cho backend. |
+| `models/` | Chứa model và preprocessor đã huấn luyện. |
 
-## 🏛️ Kiến trúc hệ thống
+## Sơ đồ kiến trúc (Mermaid)
 
-Hệ thống được chia thành hai phần chính: Frontend (giao diện người dùng) và Backend (logic xử lý, hiện đang được giả lập).
+```mermaid
+graph TD
+    subgraph User
+        U[Người dùng] -->|Chat/Form| ST[Streamlit UI<br/>demo/frontend/ui.py]
+    end
 
-### 1. Frontend (`demo/frontend/`)
+    subgraph Frontend
+        ST --> QA[Quick Prompts<br/>components/quick_prompts.py]
+        ST --> IF[Input Form<br/>components/input_form.py]
+        ST --> AC[ApiClient<br/>logic/api_client.py]
+    end
 
-- **Framework**: [Streamlit](https://streamlit.io/)
-- **Entry Point**: [`demo/frontend/ui.py`](demo/frontend/ui.py) là file chính để chạy ứng dụng. Nó chịu trách nhiệm:
-  - Cấu hình trang và quản lý trạng thái phiên (`st.session_state`).
-  - Tải các file CSS tùy chỉnh từ thư mục [`demo/frontend/styles/`](demo/frontend/styles/).
-  - Điều hướng giao diện giữa trang chào mừng (landing page) và màn hình chat.
-  - Hiển thị lịch sử trò chuyện và xử lý đầu vào của người dùng.
-- **Components (`demo/frontend/components/`)**:
-  - [`quick_prompts.py`](demo/frontend/components/quick_prompts.py): Tạo ra các thẻ gợi ý trên màn hình chính.
-  - [`input_form.py`](demo/frontend/components/input_form.py): Tạo và quản lý biểu mẫu nhập liệu chi tiết.
-- **Logic (`demo/frontend/logic/`)**:
-  - [`api_client.py`](demo/frontend/logic/api_client.py): Chịu trách nhiệm giao tiếp với backend. **Hiện tại, file này đang giả lập (mock) các phản hồi từ bot** để phục vụ cho việc phát triển giao diện mà không cần backend thật.
-- **Styling (`demo/frontend/styles/`)**:
-  - Các file CSS (`main.css`, `chat_message.css`, `input_form.css`, `quick_prompts.css`) được sử dụng để tùy chỉnh giao diện của ứng dụng.
+    AC -->|REST /api/*| FL[Flask API<br/>demo/backend/api.py]
 
-### 2. Backend (Định hướng phát triển)
+    subgraph Backend
+        FL --> CH[chat_routes<br/>routes/chat_routes.py]
+        CH --> LLM[LLM Service<br/>services/llm_service.py]
+        CH --> HP[HousePrice Service<br/>services/house_price_service.py]
+        CH --> CS[Conversation Store<br/>storage/local_storage.py]
+        CH --> HS[House Store<br/>storage/local_storage.py]
+    end
 
-- **API Endpoint**: Frontend được cấu hình để gọi đến `http://localhost:8000/chat`.
-- **File chờ triển khai**: [`demo/backend/app.py`](demo/backend/app.py) là nơi dự kiến để xây dựng một API server (ví dụ: sử dụng FastAPI hoặc Flask). Server này sẽ nhận yêu cầu từ frontend, xử lý và gọi đến mô hình Machine Learning để trả về kết quả.
+    subgraph ML_Artifacts
+        HP -->|joblib.load| M1[linear_regression_BengaluruHouse.pkl]
+        HP -->|joblib.load| M2[preprocessor.pkl]
+    end
 
-### 3. Machine Learning (`src/`)
+    LLM -->|GEMINI_API_KEY| GX[Google Gemini API]
+    CS -->|JSON| FS[(conversations.json)]
+    HS -->|JSON| FH[(houses.json)]
+```
 
-- Thư mục `src` chứa các file chờ để xây dựng mô hình dự đoán giá nhà.
-  - [`preprocessing.py`](src/preprocessing.py): Xử lý và làm sạch dữ liệu.
-  - [`modeling.py`](src/modeling.py): Huấn luyện mô hình.
-  - [`predict.py`](src/predict.py): Cung cấp hàm để thực hiện dự đoán trên dữ liệu mới.
+## Thiết lập môi trường
 
-## 🚀 Hướng dẫn chạy ứng dụng
+Yêu cầu Python 3.8+ và `pip`.
 
-### Yêu cầu
+```bash
+# 1. Tạo môi trường ảo (.venv)
+python -m venv .venv
 
-- Python 3.8+
-- `pip`
+# 2. Kích hoạt môi trường ảo (Windows)
+.venv\Scripts\activate
+# 2. Kích hoạt môi trường ảo (macOS/Linux)
+# source .venv/bin/activate
 
-### Các bước cài đặt và khởi chạy
+# 3. Cài đặt các thư viện phụ thuộc
+pip install -r requirements.txt
+```
 
-1.  **Clone repository về máy của bạn.**
+### Biến môi trường quan trọng
 
-2.  **Tạo và kích hoạt môi trường ảo:**
-    Mở terminal trong thư mục gốc của dự án và chạy các lệnh sau:
+Sao chép và chỉnh `.env` ở thư mục gốc:
 
-    ```bash
-    # Tạo môi trường ảo
-    python -m venv .myVenv
+- `GEMINI_API_KEY`: Key Google Gemini (tùy chọn; nếu bỏ trống sẽ dùng phản hồi giả lập).
+- `GEMINI_MODEL_NAME`, `GEMINI_TEMPERATURE`, `GEMINI_MAX_TOKENS`: Tinh chỉnh model LLM.
+- `API_BASE_URL`: URL backend cho frontend Streamlit (ví dụ `http://localhost:10000/api` khi chạy cùng `demo/app.py`).
+- `API_HOST`, `API_PORT`, `UI_HOST`, `UI_PORT`/`STREAMLIT_PORT`, `FRONTEND_URL`: Cấu hình host/port và URL public khi deploy.
 
-    # Kích hoạt môi trường ảo
-    # Trên Windows:
-    .\.myVenv\Scripts\activate
-    # Trên macOS/Linux:
-    # source .myVenv/bin/activate
-    ```
+## Chạy ứng dụng
 
-3.  **Cài đặt các thư viện cần thiết:**
+### Cách đơn giản (chạy cả backend + frontend)
 
-    ```bash
-    pip install -r requirements.txt
-    ```
+```bash
+python demo/app.py
+```
 
-4.  **Chạy ứng dụng Streamlit:**
-    Đảm bảo bạn đang ở trong thư mục gốc của dự án (`Bengaluru_House`), sau đó chạy lệnh:
+- Backend Flask: `http://localhost:10000/api`
+- Frontend Streamlit: `http://localhost:10001` (tự dời nếu trùng cổng)
 
-    ```bash
-    streamlit run demo/frontend/ui.py
-    ```
+### Chạy tách biệt
 
-5.  **Mở trình duyệt và truy cập vào địa chỉ `http://localhost:8501` để xem ứng dụng.**
+```bash
+# Cửa sổ 1: Backend
+python demo/backend/api.py  # hoặc FLASK_ENV/PORT qua biến môi trường
+
+# Cửa sổ 2: Frontend (trỏ đúng API_BASE_URL)
+streamlit run demo/frontend/ui.py
+```
+
+Mở trình duyệt tại URL Streamlit để dùng chatbot.
+
+## Ghi chú triển khai
+
+- Lịch sử chat và record dự đoán được lưu JSON cục bộ trong `demo/backend/storage/`; khi deploy thực tế nên thay bằng DB/bucket.
+- Nếu dùng Render hoặc host khác, đặt `FRONTEND_URL` và `API_BASE_URL` phù hợp để frontend/backend nhận đúng URL public.
+- LLM cần Gemini API key; nếu không có, luồng chat vẫn hoạt động nhưng trả lời mang tính minh họa, dự đoán giá vẫn chạy nếu đủ trường và có model.
