@@ -10,3 +10,4 @@
 /.idea/assetWizardSettings.xml
 __pycache__/
 .env
+/venv/
