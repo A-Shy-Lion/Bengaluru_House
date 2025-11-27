@@ -25,9 +25,14 @@ def create_app() -> Flask:
 
     @app.route("/")
     def root():
-        # Redirect g?p Streamlit UI (mac dinh http://localhost:8501)
-        frontend_url = os.getenv("FRONTEND_URL", "http://localhost:8501")
-        return redirect(frontend_url)
+        """
+        Redirect tới frontend nếu có cấu hình FRONTEND_URL (hoặc RENDER_EXTERNAL_URL),
+        ngược lại trả về thông báo JSON để tránh chuyển hướng về localhost trên môi trường deploy.
+        """
+        frontend_url = os.getenv("FRONTEND_URL") or os.getenv("RENDER_EXTERNAL_URL")
+        if frontend_url:
+            return redirect(frontend_url)
+        return {"message": "Backend is running. Set FRONTEND_URL to enable redirect."}
 
     @app.after_request
     def add_cors_headers(response):

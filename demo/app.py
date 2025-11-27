@@ -55,16 +55,22 @@ def shutdown_process(proc: Optional[subprocess.Popen]) -> None:
 
 
 def main():
-    api_host = os.getenv("API_HOST", "0.0.0.0")
-    api_port = int(os.getenv("API_PORT", "5000"))
-    ui_host = os.getenv("UI_HOST", "0.0.0.0")
-    ui_port = int(os.getenv("UI_PORT", os.getenv("STREAMLIT_PORT", "5001")))
+    api_host = os.getenv("API_HOST", "localhost")
+    api_port = int(os.getenv("API_PORT", "10000"))
+    ui_host = os.getenv("UI_HOST", "localhost")
+    ui_port = int(os.getenv("UI_PORT", os.getenv("STREAMLIT_PORT", "10001")))
 
     if ui_port == api_port:
         ui_port += 1
-        print(f"UI port trung v?i API, chuy?n sang {ui_port}")
+        print(f"UI port trùng với API, chuyển sang {ui_port}")
 
-    os.environ.setdefault("FRONTEND_URL", f"http://localhost:{ui_port}")
+    # Ưu tiên URL bên ngoài khi deploy (vd: Render). Nếu không có, chỉ đặt localhost cho môi trường dev.
+    frontend_url = os.getenv("FRONTEND_URL") or os.getenv("RENDER_EXTERNAL_URL")
+    if not frontend_url and ui_host in ("localhost", "127.0.0.1"):
+        frontend_url = f"http://{ui_host}:{ui_port}"
+    if frontend_url:
+        os.environ["FRONTEND_URL"] = frontend_url
+
     print(f"Starting Flask API on http://{api_host}:{api_port}/api")
     api_server = start_flask(api_host, api_port)
 
