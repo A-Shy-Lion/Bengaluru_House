@@ -1,61 +1,45 @@
-/* --- QUICK PROMPT CARDS (Các thẻ gợi ý) --- */
+/* --- QUICK PROMPT CARDS (Dark dashboard style) --- */
 
-/* Target row chứa quick prompts */
 [data-testid="stHorizontalBlock"]:has(#quick-prompts-row-marker) {
-    align-items: stretch; /* Đảm bảo các cột cao bằng nhau */
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    align-items: stretch;
+    justify-items: center;
+    gap: 16px;
+    padding: 8px 0 4px 0;
+    max-width: 920px;
+    margin: 0 auto;
 }
 
-/* Ẩn hoàn toàn marker để không chiếm chỗ trong flex column */
 [data-testid="stMarkdownContainer"]:has(#quick-prompts-row-marker) {
     display: none !important;
 }
 
-/* Đảm bảo các nút trong row này có chiều cao bằng nhau và fill cột */
 [data-testid="stHorizontalBlock"]:has(#quick-prompts-row-marker) [data-testid="column"] {
-    display: flex;
-    flex-direction: column;
+    display: block;
 }
 
 [data-testid="stHorizontalBlock"]:has(#quick-prompts-row-marker) .stButton {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
+    display: block;
 }
 
 [data-testid="stHorizontalBlock"]:has(#quick-prompts-row-marker) .stButton > button {
-    height: 100% !important;
-}
-
-/* Chúng ta sẽ style các nút bấm (st.button) để trông giống các thẻ card */
-div.stButton > button {
     width: 100%;
-    height: auto;
-    min-height: 120px; /* Chiều cao tối thiểu cho thẻ */
-    white-space: normal; /* Cho phép xuống dòng */
-    word-wrap: break-word;
-    background-color: #ffffff;
-    border: 1px solid #e0e0e0;
-    border-radius: 16px; /* Bo tròn góc */
-    box-shadow: 0px 4px 12px rgba(0,0,0,0.05); /* Đổ bóng nhẹ */
-    color: #333;
-    padding: 20px;
-    text-align: left;
-    transition: all 0.3s ease;
+    min-height: 150px;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    background: linear-gradient(145deg, rgba(79, 70, 229, 0.22), rgba(34, 211, 238, 0.16));
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 14px 32px rgba(0, 0, 0, 0.32);
+    color: #e9edff;
+    padding: 18px 20px;
+    text-align: center;
+    letter-spacing: 0.1px;
 }
 
-div.stButton > button:hover {
-    border-color: #a0a0a0;
-    box-shadow: 0px 6px 16px rgba(0,0,0,0.1);
-    transform: translateY(-2px); /* Nhẹ nhàng nổi lên khi hover */
-    background-color: #fff; /* Giữ nguyên màu nền trắng */
-    color: #000;
-}
-
-div.stButton > button:focus:not(:active) {
-    border-color: #a0a0a0;
-    color: #333;
+[data-testid="stHorizontalBlock"]:has(#quick-prompts-row-marker) .stButton > button:hover {
+    background: linear-gradient(145deg, rgba(124, 58, 237, 0.3), rgba(34, 211, 238, 0.2));
+    border-color: rgba(255, 255, 255, 0.2);
 }

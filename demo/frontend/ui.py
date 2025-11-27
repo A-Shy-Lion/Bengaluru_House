@@ -18,9 +18,9 @@ except ImportError as e:  # pragma: no cover - guard for bad working dir
 
 # --- CẤU HÌNH TRANG ---
 st.set_page_config(
-    page_title="Bengaluru House Price",
+    page_title="Dự đoán giá nhà Bengaluru",
     page_icon="🏠",
-    layout="centered",
+    layout="wide",
     initial_sidebar_state="collapsed",
 )
 
@@ -79,7 +79,7 @@ def sync_history_once() -> None:
 
 def handle_chat(user_input: str) -> None:
     """
-    Gửi tin nhắn từ UI -> Backend Flask (/api/chat) -> Cập nhật lịch sử.
+    Gửi tin nhắn tới backend và cập nhật lịch sử.
     """
     if not user_input:
         return
@@ -129,15 +129,15 @@ is_landing_page = len(st.session_state.messages) == 0
 
 # --- THANH CẤU HÌNH ---
 with st.sidebar:
-    st.markdown("### Backend")
-    api_base_input = st.text_input("API base", value=st.session_state.api_base, help="Mặc định http://localhost:5000/api")
+    st.markdown("### Máy chủ backend")
+    api_base_input = st.text_input("Địa chỉ API", value=st.session_state.api_base, help="Mặc định http://localhost:5000/api")
     if api_base_input.rstrip("/") != st.session_state.api_base.rstrip("/"):
         st.session_state.api_base = api_base_input.rstrip("/")
         st.session_state.history_loaded = False
         api_client = ApiClient(st.session_state.api_base)
-    st.caption(f"Session: {st.session_state.session_id or 'mới'}")
+    st.caption(f"Phiên: {st.session_state.session_id or 'mới'}")
     render_detected_fields()
-    if st.button("Xóa hội thoại và tạo session mới"):
+    if st.button("Xóa hội thoại và tạo phiên mới"):
         st.session_state.messages = []
         st.session_state.session_id = ""
         st.session_state.detected_fields = {}
@@ -147,45 +147,54 @@ with st.sidebar:
 
 # --- GIAO DIỆN CHÍNH ---
 
-# Header cố định trên đầu trang
 st.markdown(
     """
     <div class="custom-header fixed-header">
         <div class="header-inner">
-            <div>🏠 Bengaluru House Price</div>
-            <div><img src="https://i.pinimg.com/736x/92/b2/49/92b24967cf34c2f5b82ca1ec6268fad4.jpg" width="30" style="border-radius:50%;"></div>
+            <div class="brand">
+                <div class="brand-icon">&#127968;</div>
+                <div>
+                    <div class="brand-title">Trình dự báo giá nhà Bengaluru</div>
+                    <div class="brand-sub">AI dự báo giá & phân tích bất động sản</div>
+                </div>
+            </div>
+            <div class="header-actions">
+                <div class="status-pill"><span class="dot"></span>Trực tuyến</div>
+                <button class="ghost-btn">Dự đoán giá</button>
+                <button class="primary-btn">Phân tích thị trường</button>
+            </div>
         </div>
     </div>
-    <div style='height: 70px;'></div>
     """,
     unsafe_allow_html=True,
 )
 
-# Container chứa nội dung chat
 chat_container = st.container()
-
-# --- LOGIC ĐIỀU HƯỚNG GIAO DIỆN ---
 
 if is_landing_page:
     with chat_container:
+        st.markdown('<div class="chat-shell hero-shell">', unsafe_allow_html=True)
         st.markdown('<h1 class="welcome-title">Xin chào! <br> Bạn muốn biết thông tin gì?</h1>', unsafe_allow_html=True)
-        st.markdown('<p class="welcome-subtitle">Sử dụng một trong những gợi ý phổ biến dưới đây hoặc nhập câu hỏi của bạn để bắt đầu</p>', unsafe_allow_html=True)
+        st.markdown('<p class="welcome-subtitle">Sử dụng gợi ý nhanh hoặc nhập câu hỏi bên dưới để khởi tạo phân tích</p>', unsafe_allow_html=True)
 
         user_picked_prompt = show_quick_prompts()
         if user_picked_prompt:
             handle_chat(user_picked_prompt)
+            st.session_state.show_form = False
             st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
 
 else:
     with chat_container:
-        st.markdown('<div style="height: 50px;"></div>', unsafe_allow_html=True)
+        st.markdown('<div class="chat-shell">', unsafe_allow_html=True)
+        st.markdown('<div style="height: 20px;"></div>', unsafe_allow_html=True)
         for message in st.session_state.messages:
             msg_class = "st-chat-message-user" if message["role"] == "user" else "st-chat-message-assistant"
             if message["role"] == "user":
                 st.markdown(
                     f"""
                 <div class="st-chat-row-user">
-                    <div class="{msg_class}">{message["content"]}</div>
+                    <div class="{msg_class}">{message['content']}</div>
                     <div class="st-chat-avatar-user">
                         <img src="https://i.pinimg.com/736x/92/b2/49/92b24967cf34c2f5b82ca1ec6268fad4.jpg" width="30" height="30" style="border-radius: 50%; object-fit: cover;">
                     </div>
@@ -200,13 +209,14 @@ else:
                     <div class="st-chat-avatar-assistant">
                         <img src="https://img.freepik.com/vektoren-kostenlos/graident-ai-robot-vectorart_78370-4114.jpg" width="30" height="30" style="border-radius: 50%; object-fit: cover;">
                     </div>
-                    <div class="{msg_class}">{message["content"]}</div>
+                    <div class="{msg_class}">{message['content']}</div>
                 </div>
                 """,
                     unsafe_allow_html=True,
                 )
 
-        st.markdown('<div style="height: 100px;"></div>', unsafe_allow_html=True)
+        st.markdown('<div style="height: 40px;"></div>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
         st.markdown('<div id="end-of-chat"></div>', unsafe_allow_html=True)
 
         components.html(
@@ -226,15 +236,15 @@ else:
 # --- THANH CHAT INPUT VỚI NÚT FORM NHỎ BÊN PHẢI ---
 input_cols = st.columns([8, 1])
 with input_cols[0]:
-    prompt = st.chat_input("Thông tin giá nhà?... ", key="chat_input_field")
+    prompt = st.chat_input("Nhập câu hỏi về giá nhà hoặc yêu cầu phân tích...", key="chat_input_field")
 with input_cols[1]:
     st.markdown('<div id="fix-chat-button"></div>', unsafe_allow_html=True)
-    btn_form = st.button("📋", help="Nhập Form", key="btn_form_small", use_container_width=True)
+    btn_form = st.button("Form", help="Nhập Form", key="btn_form_small", use_container_width=True)
     if btn_form:
         st.session_state.show_form = not st.session_state.show_form
         st.rerun()
 
-# --- FORM NHẬP LIỆU (HIỂN THỊ KHI ĐƯỢC TOGGLE) ---
+# --- FORM NHẬP LIỆU ---
 if st.session_state.show_form:
     with st.container():
         st.markdown('<div id="form-anchor"></div>', unsafe_allow_html=True)
@@ -280,8 +290,8 @@ if st.session_state.show_form:
                 f"total_sqft={form_data['total_sqft']}, bath={form_data['bath']}, bhk={form_data['bhk']}. "
                 "Hãy xử lý và tiếp tục hội thoại."
             )
-            handle_chat(user_msg)
             st.session_state.show_form = False
+            handle_chat(user_msg)
             st.rerun()
 
 if prompt:

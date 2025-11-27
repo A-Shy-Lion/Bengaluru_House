@@ -1,149 +1,97 @@
-/* --- FORM STYLING (Giống hình mẫu) --- */
+/* --- FORM DRAWER (dark gradient) --- */
 
-/* Scope styles chỉ trong form drawer */
-[data-testid="stVerticalBlock"]:has(#form-anchor) {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
-/* 1. Input Fields (Number Input, Selectbox) */
-[data-testid="stVerticalBlock"]:has(#form-anchor) .stNumberInput input,
-[data-testid="stVerticalBlock"]:has(#form-anchor) [data-baseweb="select"] > div {
-    background-color: #fcfcfc;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    color: #333;
-    min-height: 45px; /* Tăng chiều cao cho giống mẫu */
-}
-
-/* Đảm bảo text hiển thị rõ khi nhập liệu trong Selectbox */
-[data-testid="stVerticalBlock"]:has(#form-anchor) [data-baseweb="select"] input {
-    color: #333 !important;
-    caret-color: #333 !important;
-}
-
-/* Remove default focus border of streamlit and add custom one */
-[data-testid="stVerticalBlock"]:has(#form-anchor) .stNumberInput input:focus,
-[data-testid="stVerticalBlock"]:has(#form-anchor) [data-baseweb="select"] > div:focus-within {
-    border-color: #4a90e2;
-    box-shadow: 0 0 0 1px #4a90e2;
-}
-
-/* 2. Labels */
-[data-testid="stVerticalBlock"]:has(#form-anchor) label p {
-    font-size: 14px;
-    color: #666;
-    font-weight: 500;
-}
-
-/* 3. Submit Button */
-/* Target nút submit cụ thể trong form */
-[data-testid="stVerticalBlock"]:has(#form-anchor) .stButton > button {
-    background-color: #4169E1 !important; /* Royal Blue giống hình */
-    color: white !important;
-    border: none;
-    border-radius: 8px;
-    padding: 10px 24px;
-    font-weight: 600;
-    box-shadow: 0 4px 6px rgba(65, 105, 225, 0.2);
-    transition: all 0.2s;
-    min-height: 45px;
-    margin-top: 10px;
-}
-
-[data-testid="stVerticalBlock"]:has(#form-anchor) .stButton > button:hover {
-    background-color: #3154b3 !important;
-    box-shadow: 0 6px 8px rgba(65, 105, 225, 0.3);
-    transform: translateY(-1px);
-}
-
-[data-testid="stVerticalBlock"]:has(#form-anchor) .stButton > button:active {
-    transform: translateY(0px);
-}
-
-/* 4. Form Header */
-[data-testid="stVerticalBlock"]:has(#form-anchor) h4 {
-    color: #333;
-    font-weight: 600;
-    margin-top: 0px;
-    padding-top: 0px;
-}
-
-/* --- FORM DRAWER BEHAVIOR (Khi form mở) --- */
-/* Sử dụng body:has(#form-anchor) để phát hiện khi form đang hiển thị */
-
-/* 1. Biến container chứa form thành ngăn kéo (drawer) cố định ở đáy */
 [data-testid="stVerticalBlock"]:has(#form-anchor) {
     position: fixed;
     bottom: 0;
     left: 0;
     width: 100%;
-    height: 300px; /* Chiều cao cho form */
-    background: linear-gradient(to bottom right, #fddffc 0%, #dae9ff 50%, #c0f1ff 100%);
-    border-top: 1px solid #e0e0e0;
+    height: 320px;
+    background: linear-gradient(160deg, #0f182c, #111f3a);
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
     z-index: 2000;
-    padding: 10px calc(50% - 400px); /* Căn giữa nội dung form theo width 800px */
-    box-shadow: 0px -4px 20px rgba(0,0,0,0.1);
+    padding: 14px calc(50% - 520px);
+    box-shadow: 0 -18px 42px rgba(0, 0, 0, 0.45);
     overflow-y: auto;
     transition: all 0.3s ease;
 }
 
-/* Responsive padding cho màn hình nhỏ */
-@media (max-width: 850px) {
+@media (max-width: 1100px) {
     [data-testid="stVerticalBlock"]:has(#form-anchor) {
-        padding: 10px 1rem;
+        padding: 14px 1.25rem;
     }
 }
 
-/* 2. Đẩy Chat Input lên trên form */
+/* --- FORM FIELDS --- */
+[data-testid="stVerticalBlock"]:has(#form-anchor) .stNumberInput input,
+[data-testid="stVerticalBlock"]:has(#form-anchor) [data-baseweb="select"] > div {
+    background-color: #151f35;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    color: #e9edff;
+    min-height: 48px;
+}
+
+[data-testid="stVerticalBlock"]:has(#form-anchor) [data-baseweb="select"] input {
+    color: #e9edff !important;
+    caret-color: #e9edff !important;
+}
+
+[data-testid="stVerticalBlock"]:has(#form-anchor) .stNumberInput input:focus,
+[data-testid="stVerticalBlock"]:has(#form-anchor) [data-baseweb="select"] > div:focus-within {
+    border-color: #22d3ee;
+    box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.35);
+}
+
+[data-testid="stVerticalBlock"]:has(#form-anchor) label p {
+    font-size: 14px;
+    color: #a7b4d9;
+    font-weight: 600;
+}
+
+[data-testid="stVerticalBlock"]:has(#form-anchor) .stButton > button {
+    background: linear-gradient(135deg, #4f46e5, #22d3ee) !important;
+    color: #0b1222 !important;
+    border: none;
+    border-radius: 12px;
+    padding: 12px 24px;
+    font-weight: 700;
+    box-shadow: 0 14px 32px rgba(79, 70, 229, 0.35);
+    transition: transform 0.15s ease;
+    min-height: 48px;
+    margin-top: 12px;
+}
+
+[data-testid="stVerticalBlock"]:has(#form-anchor) .stButton > button:hover {
+    transform: translateY(-1px);
+}
+
+[data-testid="stVerticalBlock"]:has(#form-anchor) h4 {
+    color: #e9edff;
+    font-weight: 700;
+    margin-top: 0px;
+    padding-top: 0px;
+}
+
+/* --- WHEN DRAWER IS OPEN: push chat input up --- */
 body:has(#form-anchor) [data-testid="stBottom"] {
-    bottom: 400px !important; /* Bằng chiều cao form - 10px */
-    transition: bottom 0.3s ease;
+    bottom: 330px !important;
 }
 
-/* 3. Đẩy nút toggle lên theo */
 body:has(#form-anchor) [data-testid="stHorizontalBlock"]:has(#fix-chat-button) {
-    bottom: 400px !important; /* Bằng chiều cao form - 10px */
-    transition: bottom 0.3s ease;
+    bottom: 330px !important;
 }
 
-/* 4. Tăng padding bottom cho main content để không bị che */
 body:has(#form-anchor) .main .block-container {
-    padding-bottom: 500px !important; /* 400px form + chat input + spacing */
+    padding-bottom: 480px !important;
 }
 
-/* Responsive padding cho màn hình nhỏ */
-@media (max-width: 850px) {
-    [data-testid="stVerticalBlock"]:has(#form-anchor) {
-        padding: 10px 1rem;
-    }
-}
-
-/* 2. Đẩy Chat Input lên trên form */
-body:has(#form-anchor) [data-testid="stBottom"] {
-    bottom: 290px !important; /* Bằng chiều cao form */
-    transition: bottom 0.3s ease;
-}
-
-/* 3. Đẩy nút toggle lên theo */
-body:has(#form-anchor) [data-testid="stHorizontalBlock"]:has(#fix-chat-button) {
-    bottom: 290px !important; /* Bằng chiều cao form */
-    transition: bottom 0.3s ease;
-}
-
-/* 4. Tăng padding bottom cho main content để không bị che */
-body:has(#form-anchor) .main .block-container {
-    padding-bottom: 400px !important; /* 280px form + chat input + spacing */
-}
-
-/* --- DROPDOWN MENU TWEAKS --- */
-/* Giới hạn chiều cao của dropdown menu để không che lấp toàn bộ form */
-div[data-baseweb="popover"] ul, 
+/* Dropdown height */
+div[data-baseweb="popover"] ul,
 div[data-baseweb="menu"] {
-    max-height: 150px !important;
+    max-height: 170px !important;
     overflow-y: auto !important;
 }
 
-/* Đảm bảo dropdown nằm trên các phần tử khác */
 div[data-baseweb="popover"] {
     z-index: 9999 !important;
 }

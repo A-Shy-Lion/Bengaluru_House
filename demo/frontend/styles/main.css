@@ -1,130 +1,358 @@
-/* --- CẤU HÌNH CHUNG --- */
-/* Ẩn menu burger và footer mặc định của Streamlit */
-#MainMenu {visibility: hidden;}
-footer {visibility: hidden;}
-header {visibility: hidden;}
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 
-/* Tạo nền gradient cho toàn ứng dụng (giống ảnh mẫu) */
+/* Ẩn menu/footers mặc định */
+#MainMenu, footer, header { visibility: hidden; }
+
+:root {
+    --bg-900: #0b1224;
+    --bg-850: #0f182c;
+    --bg-800: #101a31;
+    --bg-700: #14243d;
+    --card: #151f35;
+    --card-soft: #1b2a45;
+    --text-primary: #e9edff;
+    --text-secondary: #a7b4d9;
+    --accent-blue: #4f46e5;
+    --accent-cyan: #22d3ee;
+    --accent-pink: #f472b6;
+    --accent-gold: #fbbf24;
+}
+
 .stApp {
-    background: linear-gradient(to bottom right, #fddffc 0%, #dae9ff 50%, #c0f1ff 100%);
+    background:
+        radial-gradient(circle at 20% 20%, rgba(79, 70, 229, 0.18), transparent 32%),
+        radial-gradient(circle at 75% 12%, rgba(34, 211, 238, 0.14), transparent 32%),
+        radial-gradient(circle at 45% 78%, rgba(244, 114, 182, 0.14), transparent 35%),
+        var(--bg-900);
+    color: var(--text-primary);
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
 }
 
-/* Căn giữa nội dung chính */
 .main .block-container {
-    max-width: 800px;
-    margin-left: auto;
-    margin-right: auto;
-    padding-top: 32px;
-    padding-bottom: 150px; /* Tăng khoảng trống dưới cùng để không bị che bởi footer */
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 90px 1.5rem 160px;
 }
 
-/* --- HEADER NỘI DUNG CĂN GIỮA --- */
-.header-inner {
-    max-width: 800px;
-    margin: 0 auto;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 24px;
+a, a:visited {
+    color: var(--accent-cyan);
 }
-/* --- HEADER CỐ ĐỊNH --- */
+
+/* --- HEADER --- */
 .fixed-header {
     position: fixed;
-    top: 0px;
-    left: 0px;
-    width: 100vw;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: linear-gradient(90deg, #0f182c 0%, #0c1324 100%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.45);
     z-index: 1000;
-    background: linear-gradient(to right, #f7b3ef 5%, #a5f9f9 100%);
-    box-shadow: 0px 4px 8px rgba(0,0,0,0.05);
-    padding: 18px 70px 12px 70px;
 }
 
-/* --- HEADER & WELCOME TEXT --- */
-.custom-header {
-    margin-bottom: 12px;
-    color: #333;
+.header-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 24px;
+    gap: 16px;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.brand-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+    display: grid;
+    place-items: center;
+    color: #0b1222;
+    font-weight: 800;
+    font-size: 18px;
+    box-shadow: 0 12px 32px rgba(79, 70, 229, 0.35);
+}
+
+.brand-title {
+    color: var(--text-primary);
+    font-weight: 700;
+    font-size: 16px;
+    letter-spacing: 0.2px;
+}
+
+.brand-sub {
+    color: var(--text-secondary);
+    font-size: 12px;
+    letter-spacing: 0.2px;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(34, 211, 238, 0.08);
+    color: var(--accent-cyan);
+    border: 1px solid rgba(34, 211, 238, 0.4);
+    padding: 8px 12px;
+    border-radius: 30px;
     font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 0.2px;
+}
+
+.status-pill .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent-cyan);
+    box-shadow: 0 0 0 4px rgba(34, 211, 238, 0.16);
+}
+
+.ghost-btn,
+.primary-btn {
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-primary);
+    padding: 9px 14px;
+    border-radius: 12px;
+    font-weight: 700;
+    letter-spacing: 0.1px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
+}
+
+.ghost-btn:hover {
+    border-color: rgba(255, 255, 255, 0.25);
+    transform: translateY(-1px);
+}
+
+.primary-btn {
+    background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+    border: none;
+    color: #0b1222;
+}
+
+.primary-btn:hover {
+    box-shadow: 0 14px 32px rgba(79, 70, 229, 0.35);
+    transform: translateY(-1px);
+}
+
+.hero {
+    text-align: center;
+    margin-top: 14px;
+    margin-bottom: 6px;
+}
+
+.hero h1 {
+    margin: 0;
+    font-size: 30px;
+    font-weight: 800;
+    background: linear-gradient(135deg, #8ab3ff, #a855f7);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.hero p {
+    margin: 8px 0 0 0;
+    color: var(--text-secondary);
+    font-weight: 500;
 }
 
 .welcome-title {
     text-align: center;
-    text-justify: center;
-    color: #333 !important;
-    font-size: 2.5rem;
-    font-weight: 700;
+    color: #dbe8ff !important;
+    font-size: 26px;
+    font-weight: 800;
+    margin-bottom: 12px;
 }
 
 .welcome-subtitle {
     text-align: center;
-    font-size: 1.2rem;
-    color: #555555 !important;
-    margin-bottom: 24px;
+    font-size: 16px;
+    color: var(--text-secondary) !important;
+    margin-bottom: 16px;
 }
 
-/* --- FIXED FOOTER (CHAT INPUT & BUTTON) --- */
+/* --- CARDS & CHAT WRAPPER --- */
+.chat-shell {
+    background: linear-gradient(145deg, rgba(26, 39, 68, 0.92), rgba(15, 24, 45, 0.96));
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 20px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+    padding: 24px;
+}
 
-/* 1. Style container stBottom (chứa st.chat_input) */
+.hero-shell {
+    background: linear-gradient(145deg, rgba(32, 44, 78, 0.95), rgba(21, 33, 60, 0.95));
+}
+
+.stMarkdown p {
+    color: var(--text-primary);
+}
+
+.stCaption, .st-emotion-cache-8eq7ov p {
+    color: var(--text-secondary);
+}
+
+/* Metric cards */
+[data-testid="stMetricValue"] {
+    color: var(--text-primary);
+}
+[data-testid="stMetricLabel"] {
+    color: var(--text-secondary);
+}
+
+/* --- SIDEBAR --- */
+[data-testid="stSidebar"] {
+    background: linear-gradient(180deg, #0d1528, #0c1324);
+    border-right: 1px solid rgba(255, 255, 255, 0.04);
+    box-shadow: 10px 0 30px rgba(0,0,0,0.35);
+}
+
+/* --- QUICK PROMPTS --- */
+[data-testid="stHorizontalBlock"]:has(#quick-prompts-row-marker) {
+    align-items: stretch;
+    margin-top: 12px;
+    gap: 12px;
+}
+
+[data-testid="stMarkdownContainer"]:has(#quick-prompts-row-marker) {
+    display: none !important;
+}
+
+[data-testid="stHorizontalBlock"]:has(#quick-prompts-row-marker) [data-testid="column"] {
+    display: flex;
+    flex-direction: column;
+}
+
+[data-testid="stHorizontalBlock"]:has(#quick-prompts-row-marker) .stButton {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+div.stButton > button {
+    width: 100%;
+    min-height: 130px;
+    white-space: normal;
+    background: linear-gradient(160deg, rgba(79, 70, 229, 0.16), rgba(34, 211, 238, 0.14));
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 18px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+    color: var(--text-primary);
+    padding: 18px;
+    text-align: left;
+    transition: all 0.25s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+div.stButton > button:hover {
+    border-color: rgba(255, 255, 255, 0.18);
+    transform: translateY(-3px);
+    box-shadow: 0 16px 36px rgba(79, 70, 229, 0.4);
+    background: linear-gradient(160deg, rgba(79, 70, 229, 0.22), rgba(34, 211, 238, 0.18));
+}
+
+div.stButton > button:focus:not(:active) {
+    border-color: rgba(34, 211, 238, 0.6);
+    box-shadow: 0 0 0 2px rgba(34, 211, 238, 0.2);
+}
+
+/* --- CHAT INPUT --- */
 [data-testid="stBottom"] {
-    background: linear-gradient(to right, #facdf4 5%, #bff8f8 100%);
-    box-shadow: 0px -2px 8px rgba(0,0,0,0.04);
-    padding-bottom: 20px;
-    padding-top: 20px;
+    background: linear-gradient(180deg, rgba(12, 19, 36, 0.92), rgba(12, 19, 36, 0.98));
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.35);
+    padding: 18px 0 24px 0;
     z-index: 999;
 }
 
-/* 2. Cố định nút bấm (nằm trong columns) xuống dưới cùng */
-/* Sử dụng :has() để target block chứa anchor #fix-chat-button */
+/* Cố định nút bên phải cùng chiều ngang với input */
 [data-testid="stHorizontalBlock"]:has(#fix-chat-button) {
     position: fixed;
-    bottom: 0px; /* Đặt sát đáy để dễ căn chỉnh với stBottom */
+    bottom: 0px;
     left: 50%;
     transform: translateX(-50%);
     width: 100%;
-    max-width: 800px;
+    max-width: 1100px;
     z-index: 1000;
-    padding: 20px 1rem; /* Padding tương tự stBottom để khớp vị trí */
-    pointer-events: none; /* Để click xuyên qua vùng trống */
-    align-items: flex-end; /* Căn đáy các phần tử trong row */
+    padding: 16px 1.25rem;
+    pointer-events: none;
+    align-items: flex-end;
 }
 
-/* Bật lại click cho nút bấm và input (nếu input nằm trong block này) */
 [data-testid="stHorizontalBlock"]:has(#fix-chat-button) button,
 [data-testid="stHorizontalBlock"]:has(#fix-chat-button) [data-testid="stChatInput"],
 [data-testid="stHorizontalBlock"]:has(#fix-chat-button) textarea {
     pointer-events: auto;
 }
 
-/* 3. Tinh chỉnh st.chat_input để không bị nút che mất */
-/* Nếu input nằm trong stBottom (trường hợp thường gặp) */
 [data-testid="stBottom"] .stChatInput {
     background: transparent !important;
-    padding-right: 60px !important; /* Chừa chỗ cho nút bên phải */
+    padding-right: 70px !important;
 }
 
-/* Nếu input nằm trong stHorizontalBlock (trường hợp nó không nhảy xuống stBottom) */
-[data-testid="stHorizontalBlock"]:has(#fix-chat-button) .stChatInput {
-    background: transparent !important;
-    /* Không cần padding-right lớn nếu nó nằm cùng hàng với nút */
-}
-
-/* Ẩn background mặc định của input container nếu có */
 [data-testid="stBottom"] > div {
     background: transparent;
-    max-width: 800px;
+    max-width: 1100px;
     margin: 0 auto;
 }
 
-/* --- CHAT INPUT --- */
-/* Tùy chỉnh lại thanh chat input phía dưới cho bo tròn hơn */
 .stChatInputContainer {
-    border-radius: 25px !important;
-    border: 1px solid #ddd;
-    background-color: #fff;
-    padding: 5px;
-    box-shadow: 0px -2px 10px rgba(0,0,0,0.05);
+    border-radius: 18px !important;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background-color: rgba(17, 30, 56, 0.95);
+    padding: 6px 10px;
+    box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.35);
 }
 
 .stChatInputContainer textarea {
-    border: none !important; /* Xóa viền của textarea bên trong */
+    border: none !important;
+    background: transparent !important;
+    color: var(--text-primary) !important;
+}
+
+.stChatInputContainer textarea::placeholder {
+    color: var(--text-secondary) !important;
+}
+
+/* --- DRAWER OFFSET WHEN FORM OPEN --- */
+body:has(#form-anchor) [data-testid="stBottom"],
+body:has(#form-anchor) [data-testid="stHorizontalBlock"]:has(#fix-chat-button) {
+    transition: bottom 0.3s ease;
+}
+
+/* --- SMALL UTILITIES --- */
+.custom-header {
+    color: var(--text-primary);
+}
+
+.stSuccess, .stInfo, .stWarning {
+    background-color: rgba(34, 211, 238, 0.08) !important;
+    border: 1px solid rgba(34, 211, 238, 0.25) !important;
+    color: var(--text-primary) !important;
+}
+
+/* Rounded corners for default cards */
+[data-testid="stVerticalBlock"] > [data-testid="stHorizontalBlock"],
+[data-testid="stVerticalBlock"] > [data-testid="stVerticalBlock"] {
+    border-radius: 18px;
 }

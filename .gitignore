@@ -10,7 +10,8 @@
 /.idea/assetWizardSettings.xml
 __pycache__/
 /venv/
-
+/demo/backend/storage/conversations.json
+/demo/backend/storage/houses.json
 # Virtual environment
 .myVenv/
 .env

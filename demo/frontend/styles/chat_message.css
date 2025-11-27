@@ -1,4 +1,4 @@
-/* --- ROW & AVATAR LAYOUT FOR AI MESSAGE --- */
+/* --- ROW & AVATAR LAYOUT --- */
 .st-chat-row-assistant {
     display: flex;
     justify-content: flex-start;
@@ -12,7 +12,6 @@
     display: flex;
     align-items: flex-end;
 }
-/* --- ROW & AVATAR LAYOUT FOR USER MESSAGE --- */
 .st-chat-row-user {
     display: flex;
     justify-content: flex-end;
@@ -27,17 +26,18 @@
     align-items: flex-end;
 }
 
-/* Tin nhắn của AI (assistant) - bên trái, màu chữ đen, box 70% */
+/* Assistant bubble */
 .st-chat-message-assistant {
-    color: #111 !important;
-    background: #f5f5f5;
+    color: #e9edff !important;
+    background: linear-gradient(135deg, #141f2d, #1b2a45);
     max-width: 70%;
     margin-left: 0;
     margin-right: auto;
     margin-bottom: 0.5rem;
-    border-radius: 16px 16px 16px 4px;
+    border-radius: 16px 16px 16px 6px;
     padding: 14px 18px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
     word-break: break-word;
 }
 .st-chat-avatar-assistant {
@@ -48,17 +48,18 @@
     align-items: flex-end;
 }
 
-/* Tin nhắn của người dùng (user) - bên phải, màu chữ trắng, box 70% */
+/* User bubble */
 .st-chat-message-user {
-    color: #fff !important;
-    background: #2c3e50;
+    color: #f7fbff !important;
+    background: linear-gradient(135deg, #6c5ce7, #22d3ee);
     max-width: 70%;
     margin-left: auto;
     margin-right: 0;
     margin-bottom: 0.5rem;
-    border-radius: 16px 16px 4px 16px;
+    border-radius: 16px 16px 6px 16px;
     padding: 14px 18px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.35);
     word-break: break-word;
     text-align: right;
 }
