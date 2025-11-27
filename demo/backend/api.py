@@ -1,20 +1,26 @@
 from __future__ import annotations
 
 import os
+import sys
 from pathlib import Path
 
 from dotenv import load_dotenv
 from flask import Flask, redirect
 from flask_cors import CORS
 
-# Load environment variables from project root and local backend .env
+# Ensure project root on sys.path for absolute imports when running as a script
 ROOT_DIR = Path(__file__).resolve().parents[2]
-DEMO_DIR = Path(__file__).resolve().parent.parent
+DEMO_DIR = Path(__file__).resolve().parents[1]
+for p in (ROOT_DIR, DEMO_DIR):
+    if str(p) not in sys.path:
+        sys.path.insert(0, str(p))
+
+# Load environment variables from project root and local backend .env
 load_dotenv(ROOT_DIR / ".env")
 load_dotenv(DEMO_DIR / ".env", override=True)
 load_dotenv(Path(__file__).resolve().parent / ".env", override=True)
 
-from .routes.chat_routes import chat_bp
+from backend.routes.chat_routes import chat_bp
 
 
 def create_app() -> Flask:
