@@ -1,0 +1,61 @@
+/* --- QUICK PROMPT CARDS (Các thẻ gợi ý) --- */
+
+/* Target row chứa quick prompts */
+[data-testid="stHorizontalBlock"]:has(#quick-prompts-row-marker) {
+    align-items: stretch; /* Đảm bảo các cột cao bằng nhau */
+}
+
+/* Ẩn hoàn toàn marker để không chiếm chỗ trong flex column */
+[data-testid="stMarkdownContainer"]:has(#quick-prompts-row-marker) {
+    display: none !important;
+}
+
+/* Đảm bảo các nút trong row này có chiều cao bằng nhau và fill cột */
+[data-testid="stHorizontalBlock"]:has(#quick-prompts-row-marker) [data-testid="column"] {
+    display: flex;
+    flex-direction: column;
+}
+
+[data-testid="stHorizontalBlock"]:has(#quick-prompts-row-marker) .stButton {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+[data-testid="stHorizontalBlock"]:has(#quick-prompts-row-marker) .stButton > button {
+    height: 100% !important;
+}
+
+/* Chúng ta sẽ style các nút bấm (st.button) để trông giống các thẻ card */
+div.stButton > button {
+    width: 100%;
+    height: auto;
+    min-height: 120px; /* Chiều cao tối thiểu cho thẻ */
+    white-space: normal; /* Cho phép xuống dòng */
+    word-wrap: break-word;
+    background-color: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 16px; /* Bo tròn góc */
+    box-shadow: 0px 4px 12px rgba(0,0,0,0.05); /* Đổ bóng nhẹ */
+    color: #333;
+    padding: 20px;
+    text-align: left;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+div.stButton > button:hover {
+    border-color: #a0a0a0;
+    box-shadow: 0px 6px 16px rgba(0,0,0,0.1);
+    transform: translateY(-2px); /* Nhẹ nhàng nổi lên khi hover */
+    background-color: #fff; /* Giữ nguyên màu nền trắng */
+    color: #000;
+}
+
+div.stButton > button:focus:not(:active) {
+    border-color: #a0a0a0;
+    color: #333;
+}

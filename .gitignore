@@ -11,3 +11,10 @@
 __pycache__/
 .env
 /venv/
+
+# Virtual environment
+.myVenv/
+.env
+
+# Streamlit
+.streamlit/
