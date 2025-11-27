@@ -180,6 +180,7 @@ chat_container = st.container()
 
 if is_landing_page:
     with chat_container:
+        st.markdown('<div id="landing-content-wrapper"></div>', unsafe_allow_html=True)
         st.markdown('<h1 class="welcome-title">Xin chào! <br> Bạn muốn biết thông tin gì?</h1>', unsafe_allow_html=True)
         st.markdown('<p class="welcome-subtitle">Sử dụng gợi ý nhanh hoặc nhập câu hỏi bên dưới để khởi tạo phân tích</p>', unsafe_allow_html=True)
 
@@ -252,8 +253,6 @@ with input_cols[1]:
 # --- FORM NHẬP LIỆU ---
 if st.session_state.show_form:
     with st.container():
-        st.markdown('<div id="form-anchor"></div>', unsafe_allow_html=True)
-
         locations_list = [
             "Electronic City",
             "Whitefield",

@@ -27,10 +27,12 @@ def show_quick_prompts():
         },
     ]
 
-    # Marker để CSS bắt đúng hàng chứa prompts (phục vụ căn giữa)
-    st.markdown('<div id="quick-prompts-row-marker" style="margin-top: 1.5rem;"></div>', unsafe_allow_html=True)
-
     cols = st.columns(3)
+    # Marker để CSS bắt đúng hàng chứa prompts (phục vụ căn giữa)
+    # Đặt bên trong cột đầu tiên để selector :has() hoạt động với stHorizontalBlock
+    with cols[0]:
+        st.markdown('<div id="quick-prompts-row-marker"></div>', unsafe_allow_html=True)
+
     pressed_prompt = None
 
     for i, col in enumerate(cols):

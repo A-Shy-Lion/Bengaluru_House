@@ -6,6 +6,7 @@ def show_input_form(locations_list):
     Hiển thị form nhập liệu và trả về dict dữ liệu khi nhấn gửi.
     """
     with st.form("house_prediction_form", border=False):
+        st.markdown('<div id="form-anchor"></div>', unsafe_allow_html=True)
         st.markdown("#### 🧾 Nhập thông số chi tiết")
 
         selected_loc = st.selectbox(

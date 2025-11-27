@@ -2,12 +2,12 @@
 
 [data-testid="stHorizontalBlock"]:has(#quick-prompts-row-marker) {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    align-items: stretch;
-    justify-items: center;
+    grid-template-columns: repeat(3, 1fr);
+    align-items: center;
     gap: 16px;
     padding: 8px 0 4px 0;
-    max-width: 920px;
+    width: 100% !important;
+    /* max-width: 1100px; */
     margin: 0 auto;
 }
 
@@ -16,7 +16,10 @@
 }
 
 [data-testid="stHorizontalBlock"]:has(#quick-prompts-row-marker) [data-testid="column"] {
-    display: block;
+    display: flex !important;
+    width: 100% !important;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
 }
 
 [data-testid="stHorizontalBlock"]:has(#quick-prompts-row-marker) .stButton {
@@ -25,21 +28,37 @@
 
 [data-testid="stHorizontalBlock"]:has(#quick-prompts-row-marker) .stButton > button {
     width: 100%;
-    min-height: 150px;
+    height: 50px;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     justify-content: center;
     align-items: center;
     background: linear-gradient(145deg, rgba(79, 70, 229, 0.22), rgba(34, 211, 238, 0.16));
     border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
     box-shadow: 0 14px 32px rgba(0, 0, 0, 0.32);
     color: #e9edff;
-    padding: 18px 20px;
+    padding: 16px 18px;
     text-align: center;
     letter-spacing: 0.1px;
+    transition: all 0.25s ease;
 }
 
 [data-testid="stHorizontalBlock"]:has(#quick-prompts-row-marker) .stButton > button:hover {
     background: linear-gradient(145deg, rgba(124, 58, 237, 0.3), rgba(34, 211, 238, 0.2));
     border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+    box-shadow: 0 16px 36px rgba(79, 70, 229, 0.4);
+}
+
+/* Responsive: trên màn hình nhỏ hơn */
+@media (max-width: 768px) {
+    [data-testid="stHorizontalBlock"]:has(#quick-prompts-row-marker) {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    
+    [data-testid="stHorizontalBlock"]:has(#quick-prompts-row-marker) .stButton > button {
+        height: 120px;
+    }
 }

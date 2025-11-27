@@ -1,6 +1,6 @@
 /* --- FORM DRAWER (dark gradient) --- */
 
-[data-testid="stVerticalBlock"]:has(#form-anchor) {
+[data-testid="stForm"]:has(#form-anchor) {
     position: fixed;
     bottom: 0;
     left: 0;
@@ -9,21 +9,26 @@
     background: linear-gradient(160deg, #0f182c, #111f3a);
     border-top: 1px solid rgba(255, 255, 255, 0.06);
     z-index: 2000;
-    padding: 14px calc(50% - 520px);
+    padding: 0px calc(50% - 520px);
     box-shadow: 0 -18px 42px rgba(0, 0, 0, 0.45);
     overflow-y: auto;
     transition: all 0.3s ease;
 }
 
+.st-emotion-cache-wfksaw {
+    gap: 1rem !important;
+}
+
+
 @media (max-width: 1100px) {
-    [data-testid="stVerticalBlock"]:has(#form-anchor) {
+    [data-testid="stForm"]:has(#form-anchor) {
         padding: 14px 1.25rem;
     }
 }
 
 /* --- FORM FIELDS --- */
-[data-testid="stVerticalBlock"]:has(#form-anchor) .stNumberInput input,
-[data-testid="stVerticalBlock"]:has(#form-anchor) [data-baseweb="select"] > div {
+[data-testid="stForm"]:has(#form-anchor) .stNumberInput input,
+[data-testid="stForm"]:has(#form-anchor) [data-baseweb="select"] > div {
     background-color: #151f35;
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 10px;
@@ -31,24 +36,24 @@
     min-height: 48px;
 }
 
-[data-testid="stVerticalBlock"]:has(#form-anchor) [data-baseweb="select"] input {
+[data-testid="stForm"]:has(#form-anchor) [data-baseweb="select"] input {
     color: #e9edff !important;
     caret-color: #e9edff !important;
 }
 
-[data-testid="stVerticalBlock"]:has(#form-anchor) .stNumberInput input:focus,
-[data-testid="stVerticalBlock"]:has(#form-anchor) [data-baseweb="select"] > div:focus-within {
+[data-testid="stForm"]:has(#form-anchor) .stNumberInput input:focus,
+[data-testid="stForm"]:has(#form-anchor) [data-baseweb="select"] > div:focus-within {
     border-color: #22d3ee;
     box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.35);
 }
 
-[data-testid="stVerticalBlock"]:has(#form-anchor) label p {
+[data-testid="stForm"]:has(#form-anchor) label p {
     font-size: 14px;
     color: #a7b4d9;
     font-weight: 600;
 }
 
-[data-testid="stVerticalBlock"]:has(#form-anchor) .stButton > button {
+[data-testid="stForm"]:has(#form-anchor) .stButton > button {
     background: linear-gradient(135deg, #4f46e5, #22d3ee) !important;
     color: #0b1222 !important;
     border: none;
@@ -61,11 +66,11 @@
     margin-top: 12px;
 }
 
-[data-testid="stVerticalBlock"]:has(#form-anchor) .stButton > button:hover {
+[data-testid="stForm"]:has(#form-anchor) .stButton > button:hover {
     transform: translateY(-1px);
 }
 
-[data-testid="stVerticalBlock"]:has(#form-anchor) h4 {
+[data-testid="stForm"]:has(#form-anchor) h4 {
     color: #e9edff;
     font-weight: 700;
     margin-top: 0px;
@@ -74,11 +79,11 @@
 
 /* --- WHEN DRAWER IS OPEN: push chat input up --- */
 body:has(#form-anchor) [data-testid="stBottom"] {
-    bottom: 320px !important;
+    bottom: 300px !important;
 }
 
 body:has(#form-anchor) [data-testid="stHorizontalBlock"]:has(#fix-chat-button) {
-    bottom: 320px !important;
+    bottom: 300px !important;
 }
 
 body:has(#form-anchor) .main .block-container {
@@ -90,13 +95,37 @@ body:has(#form-anchor) .chat-shell {
     margin-bottom: 240px;
 }
 
-/* Dropdown height */
+/* Dropdown height và position */
 div[data-baseweb="popover"] ul,
 div[data-baseweb="menu"] {
-    max-height: 170px !important;
+    max-height: 200px !important;
     overflow-y: auto !important;
+    background-color: #151f35 !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 10px !important;
+    margin-top: 4px !important;
 }
 
+/* Đảm bảo dropdown nằm ngay dưới select box trong form */
 div[data-baseweb="popover"] {
-    z-index: 9999 !important;
+    z-index: 10000 !important;
+    margin-top: 0px !important;
 }
+
+/* Style cho các item trong dropdown */
+div[data-baseweb="popover"] li {
+    color: #e9edff !important;
+}
+
+div[data-baseweb="popover"] li:hover {
+    background-color: rgba(34, 211, 238, 0.1) !important;
+}
+
+/* --- LANDING PAGE ADJUSTMENTS WHEN FORM IS OPEN --- */
+body:has(#form-anchor) .welcome-title,
+body:has(#form-anchor) .welcome-subtitle,
+body:has(#form-anchor) [data-testid="stHorizontalBlock"]:has(#quick-prompts-row-marker) {
+    transform: translateY(-140px);
+    transition: transform 0.3s ease;
+}
+

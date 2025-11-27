@@ -31,7 +31,7 @@
 .main .block-container {
     max-width: 1100px;
     margin: 0 auto;
-    padding: 90px 1.5rem 160px;
+    padding: 80px 30px 160px;
 }
 
 a, a:visited {
@@ -154,8 +154,8 @@ a, a:visited {
 
 .hero {
     text-align: center;
-    margin-top: 14px;
-    margin-bottom: 6px;
+    margin-top: 12px;
+    margin-bottom: 20px;
 }
 
 .hero h1 {
@@ -178,14 +178,14 @@ a, a:visited {
     color: #dbe8ff !important;
     font-size: 26px;
     font-weight: 800;
-    margin-bottom: 12px;
+    margin-bottom: 8px;
 }
 
 .welcome-subtitle {
     text-align: center;
     font-size: 16px;
     color: var(--text-secondary) !important;
-    margin-bottom: 16px;
+    margin-bottom: 24px;
 }
 
 /* --- CARDS & CHAT WRAPPER --- */
@@ -195,6 +195,7 @@ a, a:visited {
     border-radius: 20px;
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
     padding: 24px;
+    transition: margin-bottom 0.3s ease;
 }
 
 .hero-shell {
@@ -226,24 +227,52 @@ a, a:visited {
 
 /* --- QUICK PROMPTS --- */
 [data-testid="stHorizontalBlock"]:has(#quick-prompts-row-marker) {
-    align-items: stretch;
-    margin-top: 12px;
-    gap: 12px;
+    align-items: center;
+    margin-top: 0px;
+    gap: 16px;
 }
 
 [data-testid="stMarkdownContainer"]:has(#quick-prompts-row-marker) {
     display: none !important;
+    align-items: center;
+
 }
 
 [data-testid="stHorizontalBlock"]:has(#quick-prompts-row-marker) [data-testid="column"] {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    align-items: center !important;
+    justify-content: center !important;
+
 }
 
 [data-testid="stHorizontalBlock"]:has(#quick-prompts-row-marker) .stButton {
     flex: 1;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    align-items: center;
+}
+
+[data-testid="stColumn"]:has(#quick-prompts-row-marker) {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+}
+
+div.st-emotion-cache-wfksaw {
+    gap: 0;
+    align-items: center;
+    justify-content: center;
+}
+
+div.st-emotion-cache-1hwpjuz {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
 }
 
 div.stButton > button {
@@ -259,9 +288,9 @@ div.stButton > button {
     text-align: left;
     transition: all 0.25s ease;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     justify-content: center;
-    align-items: flex-start;
+    align-items: center;
 }
 
 div.stButton > button:hover {

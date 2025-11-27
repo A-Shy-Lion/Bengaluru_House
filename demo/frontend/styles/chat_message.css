@@ -4,6 +4,7 @@
     justify-content: flex-start;
     align-items: flex-end;
     margin-bottom: 0.5rem;
+    transition: transform 0.3s ease;
 }
 .st-chat-avatar-assistant {
     margin-right: 8px;
@@ -17,6 +18,7 @@
     justify-content: flex-end;
     align-items: flex-end;
     margin-bottom: 0.5rem;
+    transition: transform 0.3s ease;
 }
 .st-chat-avatar-user {
     margin-left: 8px;
@@ -62,4 +64,15 @@
     box-shadow: 0 12px 36px rgba(0, 0, 0, 0.35);
     word-break: break-word;
     text-align: right;
+}
+
+/* Đẩy chat messages lên khi form mở */
+body:has(#form-anchor) .st-chat-row-assistant,
+body:has(#form-anchor) .st-chat-row-user {
+    transform: translateY(0);
+}
+
+body:has(#form-anchor) [data-testid="stChatMessageContainer"] {
+    margin-bottom: 320px;
+    transition: margin-bottom 0.3s ease;
 }
