@@ -55,9 +55,9 @@ def shutdown_process(proc: Optional[subprocess.Popen]) -> None:
 
 
 def main():
-    api_host = os.getenv("API_HOST", "localhost")
+    api_host = os.getenv("API_HOST", "0.0.0.0")
     api_port = int(os.getenv("API_PORT", "10000"))
-    ui_host = os.getenv("UI_HOST", "localhost")
+    ui_host = os.getenv("UI_HOST", "0.0.0.0")
     ui_port = int(os.getenv("UI_PORT", os.getenv("STREAMLIT_PORT", "10001")))
 
     if ui_port == api_port:
