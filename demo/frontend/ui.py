@@ -157,7 +157,7 @@ with st.sidebar:
 
 # --- GIAO DIỆN CHÍNH ---
 
-# Header HTML (brand và status)
+# Header cố định với brand/status HTML
 st.markdown(
     """
     <div class="custom-header fixed-header">
@@ -168,30 +168,28 @@ st.markdown(
                     <div class="brand-title">Trình dự báo giá nhà Bengaluru</div>
                     <div class="brand-sub">AI dự báo giá & phân tích bất động sản</div>
                 </div>
-            </div>
-            <div class="header-actions">
                 <div class="status-pill"><span class="dot"></span>Trực tuyến</div>
-                <button class="ghost-btn">Dự đoán giá</button>
-                <button class="primary-btn">Phân tích thị trường</button>
             </div>
+            <div class="header-button-placeholder"></div>
         </div>
     </div>
     """,
     unsafe_allow_html=True,
 )
 
-# Header buttons (Streamlit buttons với CSS positioning)
-header_col1, header_col2, header_col3 = st.columns([10, 1.2, 1.8])
-with header_col1:
-    st.markdown('<div style="height: 1px;"></div>', unsafe_allow_html=True)
-with header_col2:
+# Streamlit buttons được định vị vào header bằng CSS (pattern giống New chat)
+header_cols = st.columns([1, 1])
+with header_cols[0]:
+    st.markdown('<div class="fix-header-buttons"></div>', unsafe_allow_html=True)
     if st.button("Dự đoán giá", key="header_predict_btn", help="Mở form dự đoán giá"):
         st.session_state.show_form = not st.session_state.show_form
         st.rerun()
-with header_col3:
-    if st.button("📊 Phân tích thị trường", key="header_market_btn", help="Xem phân tích thị trường"):
+with header_cols[1]:
+    st.markdown('<div id="fix-new-button"></div>', unsafe_allow_html=True)
+    if st.button("Phân tích thị trường", key="header_market_btn", help="Xem phân tích thị trường"):
         st.session_state.show_market_analytics = not st.session_state.show_market_analytics
         st.rerun()
+
 
 # Render market analytics sidebar
 render_market_analytics_sidebar()
