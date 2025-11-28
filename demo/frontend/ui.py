@@ -48,6 +48,7 @@ st.session_state.setdefault("detected_fields", {})
 st.session_state.setdefault("last_prediction", None)
 st.session_state.setdefault("status_text", "Sẵn sàng")
 st.session_state.setdefault("history_loaded", False)
+st.session_state.setdefault("loading_new_chat", False)
 st.session_state.setdefault("api_base", os.getenv("API_BASE_URL", DEFAULT_API_BASE))
 st.session_state.setdefault("form_memory", {})
 st.session_state.setdefault("pending_form_message", None)
@@ -240,16 +241,33 @@ else:
 
 
 # --- THANH CHAT INPUT VỚI NÚT FORM NHỎ BÊN PHẢI ---
-input_cols = st.columns([8, 1])
+input_cols = st.columns([1, 7, 1])
 with input_cols[0]:
-    prompt = st.chat_input("Nhập câu hỏi về giá nhà hoặc yêu cầu phân tích...", key="chat_input_field")
+    st.markdown('<div class="fix-new-button"></div>', unsafe_allow_html=True)
+    button_label = "Loading..." if st.session_state.loading_new_chat else "New chat"
+    if st.button(button_label, help="Tạo chat mới", key="new_chat_btn", use_container_width=True, disabled=st.session_state.loading_new_chat):
+        st.session_state.loading_new_chat = True
+        st.rerun()
+
+if st.session_state.loading_new_chat:
+    import time
+    time.sleep(0.8)
+    st.session_state.messages = []
+    st.session_state.session_id = ""
+    st.session_state.detected_fields = {}
+    st.session_state.last_prediction = None
+    st.session_state.history_loaded = True
+    st.session_state.show_form = False
+    st.session_state.loading_new_chat = False
+    st.rerun()
 with input_cols[1]:
+    prompt = st.chat_input("Nhập câu hỏi về giá nhà hoặc yêu cầu phân tích...", key="chat_input_field")
+with input_cols[2]:
     st.markdown('<div id="fix-chat-button"></div>', unsafe_allow_html=True)
     btn_form = st.button("Form", help="Nhập Form", key="btn_form_small", use_container_width=True)
     if btn_form:
         st.session_state.show_form = not st.session_state.show_form
         st.rerun()
-
 # --- FORM NHẬP LIỆU ---
 if st.session_state.show_form:
     with st.container():

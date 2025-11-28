@@ -334,6 +334,44 @@ div.stButton > button:focus:not(:active) {
     pointer-events: auto;
 }
 
+/* Nút Form - màu giống button Phân tích thị trường */
+[data-testid="stHorizontalBlock"]:has(#fix-chat-button) button {
+    background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan)) !important;
+    border: none !important;
+    color: #0b1222 !important;
+    font-weight: 700 !important;
+    padding: 8px 16px !important;
+    font-size: 12px !important;
+    border-radius: 10px !important;
+    box-shadow: 0 10px 24px rgba(79, 70, 229, 0.3) !important;
+    transition: all 0.2s ease !important;
+    min-height: 36px !important;
+}
+
+[data-testid="stHorizontalBlock"]:has(#fix-chat-button) button:hover {
+    box-shadow: 0 14px 32px rgba(79, 70, 229, 0.35) !important;
+    transform: translateY(-1px) !important;
+}
+
+/* Nút New Chat - màu giống button Phân tích thị trường */
+[data-testid="stHorizontalBlock"]:has(#fix-new-button) button {
+    background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan)) !important;
+    border: none !important;
+    color: #0b1222 !important;
+    font-weight: 700 !important;
+    padding: 6px 12px !important;
+    font-size: 12px !important;
+    border-radius: 8px !important;
+    box-shadow: 0 8px 20px rgba(79, 70, 229, 0.28) !important;
+    transition: all 0.2s ease !important;
+    min-height: 32px !important;
+}
+
+[data-testid="stHorizontalBlock"]:has(#fix-new-button) button:hover {
+    box-shadow: 0 14px 32px rgba(79, 70, 229, 0.35) !important;
+    transform: translateY(-1px) !important;
+}
+
 [data-testid="stBottom"] .stChatInput {
     background: transparent !important;
     padding-right: 70px !important;
@@ -367,6 +405,38 @@ div.stButton > button:focus:not(:active) {
 body:has(#form-anchor) [data-testid="stBottom"],
 body:has(#form-anchor) [data-testid="stHorizontalBlock"]:has(#fix-chat-button) {
     transition: bottom 0.3s ease;
+}
+
+/* --- MARKET ANALYTICS BUTTON --- */
+button[data-testid="baseButton-secondary"]:has-text("📊 Phân tích thị trường") {
+    background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan)) !important;
+    border: none !important;
+    color: #0b1222 !important;
+    font-weight: 700 !important;
+    font-size: 13px !important;
+    border-radius: 10px !important;
+    box-shadow: 0 10px 24px rgba(79, 70, 229, 0.3) !important;
+    transition: all 0.2s ease !important;
+    min-height: 36px !important;
+    padding: 8px 16px !important;
+}
+
+/* Nút đóng market panel */
+button[key="close_market_panel"] {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    color: var(--text-primary) !important;
+    padding: 8px 16px !important;
+    border-radius: 8px !important;
+    font-weight: 700 !important;
+    font-size: 13px !important;
+    transition: all 0.2s ease !important;
+}
+
+button[key="close_market_panel"]:hover {
+    background: rgba(255, 255, 255, 0.12) !important;
+    border-color: rgba(255, 255, 255, 0.25) !important;
+    transform: translateY(-1px) !important;
 }
 
 /* --- SMALL UTILITIES --- */
