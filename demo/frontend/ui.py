@@ -12,6 +12,7 @@ try:
     from logic.api_client import ApiClient, ChatResponse, DEFAULT_API_BASE
     from components.quick_prompts import show_quick_prompts
     from components.input_form import show_input_form
+    from components.market_analytics import render_market_analytics_sidebar
 except ImportError as e:  # pragma: no cover - guard for bad working dir
     st.error(f"Lỗi import module: {e}. Hãy đảm bảo bạn chạy lệnh 'streamlit run' từ thư mục gốc.")
     st.stop()
@@ -52,6 +53,7 @@ st.session_state.setdefault("loading_new_chat", False)
 st.session_state.setdefault("api_base", os.getenv("API_BASE_URL", DEFAULT_API_BASE))
 st.session_state.setdefault("form_memory", {})
 st.session_state.setdefault("pending_form_message", None)
+st.session_state.setdefault("show_market_analytics", False)
 # Nếu trước đây đang dùng đường dẫn tương đối /api (không proxy), chuyển sang localhost mặc định
 if st.session_state.api_base == "/api":
     st.session_state.api_base = "http://localhost:5000/api"
@@ -155,6 +157,7 @@ with st.sidebar:
 
 # --- GIAO DIỆN CHÍNH ---
 
+# Header HTML (brand và status)
 st.markdown(
     """
     <div class="custom-header fixed-header">
@@ -176,6 +179,22 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+
+# Header buttons (Streamlit buttons với CSS positioning)
+header_col1, header_col2, header_col3 = st.columns([10, 1.2, 1.8])
+with header_col1:
+    st.markdown('<div style="height: 1px;"></div>', unsafe_allow_html=True)
+with header_col2:
+    if st.button("Dự đoán giá", key="header_predict_btn", help="Mở form dự đoán giá"):
+        st.session_state.show_form = not st.session_state.show_form
+        st.rerun()
+with header_col3:
+    if st.button("📊 Phân tích thị trường", key="header_market_btn", help="Xem phân tích thị trường"):
+        st.session_state.show_market_analytics = not st.session_state.show_market_analytics
+        st.rerun()
+
+# Render market analytics sidebar
+render_market_analytics_sidebar()
 
 chat_container = st.container()
 
