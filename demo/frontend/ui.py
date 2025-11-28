@@ -12,6 +12,7 @@ try:
     from logic.api_client import ApiClient, ChatResponse, DEFAULT_API_BASE
     from components.quick_prompts import show_quick_prompts
     from components.input_form import show_input_form
+    from components.market_analytics import render_market_analytics_sidebar
 except ImportError as e:  # pragma: no cover - guard for bad working dir
     st.error(f"Lỗi import module: {e}. Hãy đảm bảo bạn chạy lệnh 'streamlit run' từ thư mục gốc.")
     st.stop()
@@ -48,9 +49,11 @@ st.session_state.setdefault("detected_fields", {})
 st.session_state.setdefault("last_prediction", None)
 st.session_state.setdefault("status_text", "Sẵn sàng")
 st.session_state.setdefault("history_loaded", False)
+st.session_state.setdefault("loading_new_chat", False)
 st.session_state.setdefault("api_base", os.getenv("API_BASE_URL", DEFAULT_API_BASE))
 st.session_state.setdefault("form_memory", {})
 st.session_state.setdefault("pending_form_message", None)
+st.session_state.setdefault("show_market_analytics", False)
 # Nếu trước đây đang dùng đường dẫn tương đối /api (không proxy), chuyển sang localhost mặc định
 if st.session_state.api_base == "/api":
     st.session_state.api_base = "http://localhost:5000/api"
@@ -154,6 +157,7 @@ with st.sidebar:
 
 # --- GIAO DIỆN CHÍNH ---
 
+# Header cố định với brand/status HTML
 st.markdown(
     """
     <div class="custom-header fixed-header">
@@ -164,17 +168,31 @@ st.markdown(
                     <div class="brand-title">Trình dự báo giá nhà Bengaluru</div>
                     <div class="brand-sub">AI dự báo giá & phân tích bất động sản</div>
                 </div>
-            </div>
-            <div class="header-actions">
                 <div class="status-pill"><span class="dot"></span>Trực tuyến</div>
-                <button class="ghost-btn">Dự đoán giá</button>
-                <button class="primary-btn">Phân tích thị trường</button>
             </div>
+            <div class="header-button-placeholder"></div>
         </div>
     </div>
     """,
     unsafe_allow_html=True,
 )
+
+# Streamlit buttons được định vị vào header bằng CSS (pattern giống New chat)
+header_cols = st.columns([1, 1])
+with header_cols[0]:
+    st.markdown('<div class="fix-header-buttons"></div>', unsafe_allow_html=True)
+    if st.button("Dự đoán giá", key="header_predict_btn", help="Mở form dự đoán giá"):
+        st.session_state.show_form = not st.session_state.show_form
+        st.rerun()
+with header_cols[1]:
+    st.markdown('<div id="fix-new-button"></div>', unsafe_allow_html=True)
+    if st.button("Phân tích thị trường", key="header_market_btn", help="Xem phân tích thị trường"):
+        st.session_state.show_market_analytics = not st.session_state.show_market_analytics
+        st.rerun()
+
+
+# Render market analytics sidebar
+render_market_analytics_sidebar()
 
 chat_container = st.container()
 
@@ -240,16 +258,33 @@ else:
 
 
 # --- THANH CHAT INPUT VỚI NÚT FORM NHỎ BÊN PHẢI ---
-input_cols = st.columns([8, 1])
+input_cols = st.columns([1, 7, 1])
 with input_cols[0]:
-    prompt = st.chat_input("Nhập câu hỏi về giá nhà hoặc yêu cầu phân tích...", key="chat_input_field")
+    st.markdown('<div class="fix-new-button"></div>', unsafe_allow_html=True)
+    button_label = "Loading..." if st.session_state.loading_new_chat else "New chat"
+    if st.button(button_label, help="Tạo chat mới", key="new_chat_btn", use_container_width=True, disabled=st.session_state.loading_new_chat):
+        st.session_state.loading_new_chat = True
+        st.rerun()
+
+if st.session_state.loading_new_chat:
+    import time
+    time.sleep(0.8)
+    st.session_state.messages = []
+    st.session_state.session_id = ""
+    st.session_state.detected_fields = {}
+    st.session_state.last_prediction = None
+    st.session_state.history_loaded = True
+    st.session_state.show_form = False
+    st.session_state.loading_new_chat = False
+    st.rerun()
 with input_cols[1]:
+    prompt = st.chat_input("Nhập câu hỏi về giá nhà hoặc yêu cầu phân tích...", key="chat_input_field")
+with input_cols[2]:
     st.markdown('<div id="fix-chat-button"></div>', unsafe_allow_html=True)
     btn_form = st.button("Form", help="Nhập Form", key="btn_form_small", use_container_width=True)
     if btn_form:
         st.session_state.show_form = not st.session_state.show_form
         st.rerun()
-
 # --- FORM NHẬP LIỆU ---
 if st.session_state.show_form:
     with st.container():
