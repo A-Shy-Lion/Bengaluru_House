@@ -57,13 +57,14 @@
     background: linear-gradient(135deg, #4f46e5, #22d3ee) !important;
     color: #0b1222 !important;
     border: none;
-    border-radius: 12px;
-    padding: 12px 24px;
+    border-radius: 8px;
+    padding: 6px 12px;
     font-weight: 700;
-    box-shadow: 0 14px 32px rgba(79, 70, 229, 0.35);
+    font-size: 12px;
+    box-shadow: 0 8px 20px rgba(79, 70, 229, 0.28);
     transition: transform 0.15s ease;
-    min-height: 48px;
-    margin-top: 12px;
+    min-height: 32px;
+    margin-top: 8px;
 }
 
 [data-testid="stForm"]:has(#form-anchor) .stButton > button:hover {
