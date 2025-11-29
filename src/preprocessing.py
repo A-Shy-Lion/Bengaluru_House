@@ -60,7 +60,6 @@ class BengaluruPreprocessor:
         work_df["BHK"] = work_df["size"].apply(_bhk_from_size)
         work_df = work_df[work_df["BHK"] > 0]
         work_df["total_sqft"] = work_df["total_sqft"].apply(_convert_sqft)
-        work_df.dropna(subset=["total_sqft"], inplace=True)
 
         work_df["price_per_sqft"] = work_df["price"] * 1_000_000 / work_df["total_sqft"]
         work_df["location"] = work_df["location"].astype(str).str.strip()

@@ -11,6 +11,7 @@ def _resolve_root() -> Path:
     return Path(__file__).resolve().parents[3]
 
 
+@st.cache_data(show_spinner=False)
 def load_market_data():
     """Nạp và làm sạch dữ liệu bằng pipeline trong src/preprocessing (nếu khả dụng)."""
     data_path = _resolve_root() / "data" / "Bengaluru_House_Data.csv"
@@ -265,8 +266,9 @@ def render_market_analytics_sidebar():
         # Marker div for CSS targeting
         st.markdown('<div id="market-analytics-content"></div>', unsafe_allow_html=True)
         
-        # Load data
-        df = load_market_data()
+        # Load data (cached) với spinner để tránh cảm giác đơ
+        with st.spinner("Đang tải dữ liệu thị trường..."):
+            df = load_market_data()
         
         if df is not None:
             # Calculate statistics

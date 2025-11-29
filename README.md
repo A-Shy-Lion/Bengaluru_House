@@ -8,16 +8,16 @@
 | --- | --- |
 | `demo/app.py` | Khởi động song song Flask API (port 10000) và Streamlit UI (port 10001, tự dời nếu trùng); đọc `API_HOST`/`API_PORT`/`UI_HOST`/`UI_PORT`/`STREAMLIT_PORT`, đặt `FRONTEND_URL` cho redirect. |
 | `demo/backend/api.py` | Tạo Flask app, bật CORS, load `.env` (gốc, `demo/.env`, `demo/backend/.env`), redirect về `FRONTEND_URL` nếu có. |
-| `demo/backend/routes/chat_routes.py` | Endpoint: `POST /api/chat`, `GET /api/chat/<session_id>`, `POST /api/house/predict`, `GET /health`; trích trường, gọi LLM, gọi mô hình dự đoán, lưu lịch sử. |
+| `demo/backend/routes/chat_routes.py` | Endpoint: `POST /api/chat`, `GET /api/chat/<session_id>`, `POST /api/house/predict`, `GET /health`, `/api/locations`; trích trường, dò location theo `storage/locations.json` (cả substring), gọi LLM, gọi mô hình dự đoán, lưu lịch sử/bản ghi. |
 | `demo/backend/services/llm_service.py` | Gọi Gemini theo biến `GEMINI_*`; nếu thiếu API key sẽ trả lời giả lập để dev test. |
 | `demo/backend/services/house_price_service.py` | Nạp `models/linear_regression_BengaluruHouse.pkl` và `models/preprocessor.pkl`, biến đổi input, trả giá dự đoán. |
-| `demo/backend/storage/local_storage.py` | Lưu lịch sử chat và record dự đoán ra JSON trong thư mục backend. |
-| `demo/frontend/ui.py` | Giao diện chat Streamlit (quick prompts, form thu gọn, avatar); nhập `API_BASE_URL`; đồng bộ lịch sử theo `session_id`. |
+| `demo/backend/storage/local_storage.py` | Lưu lịch sử chat và record dự đoán ra JSON; hỗ trợ lưu từng phần record theo `session_id`, cập nhật dần đến khi đủ trường. |
+| `demo/frontend/ui.py` | Giao diện chat Streamlit (quick prompts, form thu gọn, avatar); nhập `API_BASE_URL`; đồng bộ lịch sử theo `session_id`; dropdown location lấy động từ `/api/locations`. |
 | `demo/frontend/components/quick_prompts.py` | Thẻ gợi ý hội thoại mẫu. |
 | `demo/frontend/components/input_form.py` | Form nhập location/total_sqft/BHK/bath và đẩy vào chat. |
 | `demo/frontend/logic/api_client.py` | Client REST gọi `POST /api/chat` và `GET /api/chat/<session_id>`. |
 | `demo/frontend/styles/` | CSS tùy chỉnh cho Streamlit (bỏ qua `index.html` demo tĩnh). |
-| `src/preprocessing.py`, `src/modeling.py`, `src/predict.py` | Xử lý dữ liệu, huấn luyện, hàm dự đoán dùng chung cho backend. |
+| `src/preprocessing.py`, `src/modeling.py`, `src/predict.py` | Xử lý dữ liệu (khớp notebook, sau làm sạch còn 7 251 dòng), huấn luyện, hàm dự đoán dùng chung cho backend. |
 | `models/` | Chứa model và preprocessor đã huấn luyện. |
 
 ## Sơ đồ kiến trúc (Mermaid)
@@ -42,6 +42,7 @@ graph TD
         CH --> HP[HousePrice Service<br/>services/house_price_service.py]
         CH --> CS[Conversation Store<br/>storage/local_storage.py]
         CH --> HS[House Store<br/>storage/local_storage.py]
+        CH --> LOCS[Location Service<br/>services/location_service.py]
     end
 
     subgraph ML_Artifacts
@@ -52,6 +53,7 @@ graph TD
     LLM -->|GEMINI_API_KEY| GX[Google Gemini API]
     CS -->|JSON| FS[(conversations.json)]
     HS -->|JSON| FH[(houses.json)]
+    LOCS -->|JSON| FLIST[(locations.json)]
 ```
 
 ## Thiết lập môi trường
