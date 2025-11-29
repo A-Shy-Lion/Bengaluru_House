@@ -32,7 +32,7 @@ def render_market_charts():
                      template="plotly_dark") # Sử dụng dark theme cho Plotly
     fig_bhk.update_layout(margin={"t":0, "b":0, "l":0, "r":0}, height=300, 
                           paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
-    st.plotly_chart(fig_bhk, use_container_width=True, config={'displayModeBar': False})
+    st.plotly_chart(fig_bhk, width="stretch", config={'displayModeBar': False})
     st.markdown('</div>', unsafe_allow_html=True)
     
     # --- 3. XU HƯỚNG GIÁ THEO THỜI GIAN ---

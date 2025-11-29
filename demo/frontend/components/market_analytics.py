@@ -352,7 +352,7 @@ def render_market_analytics_sidebar():
                 showlegend=False
             )
             
-            st.plotly_chart(fig_bhk, use_container_width=True, config={'displayModeBar': False})
+            st.plotly_chart(fig_bhk, width="stretch", config={'displayModeBar': False})
             st.markdown('</div>', unsafe_allow_html=True)
             
             # Chart 2: Top 10 khu vực nhiều dữ liệu
@@ -399,7 +399,7 @@ def render_market_analytics_sidebar():
                 showlegend=False
             )
             
-            st.plotly_chart(fig_location, use_container_width=True, config={'displayModeBar': False})
+            st.plotly_chart(fig_location, width="stretch", config={'displayModeBar': False})
             st.markdown('</div>', unsafe_allow_html=True)
             
             # Chart 3: Đặc trưng ảnh hưởng (minh họa)
@@ -450,7 +450,7 @@ def render_market_analytics_sidebar():
                 showlegend=False
             )
             
-            st.plotly_chart(fig_importance, use_container_width=True, config={'displayModeBar': False})
+            st.plotly_chart(fig_importance, width="stretch", config={'displayModeBar': False})
             st.markdown('</div>', unsafe_allow_html=True)
             
             # Chart 4: Phân bổ giá theo khu vực
@@ -493,7 +493,7 @@ def render_market_analytics_sidebar():
                 )
             )
             
-            st.plotly_chart(fig_pie, use_container_width=True, config={'displayModeBar': False})
+            st.plotly_chart(fig_pie, width="stretch", config={'displayModeBar': False})
             st.markdown('</div>', unsafe_allow_html=True)
             
             # Thông tin nhanh

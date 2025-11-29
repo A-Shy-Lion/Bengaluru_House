@@ -42,7 +42,7 @@ def show_input_form(locations_list):
                 format="%d",
             )
 
-        submitted = st.form_submit_button("📨 Gửi thông tin", type="primary", use_container_width=True)
+        submitted = st.form_submit_button("📨 Gửi thông tin", type="primary", width="stretch")
 
         if submitted:
             return {

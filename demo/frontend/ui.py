@@ -289,7 +289,7 @@ input_cols = st.columns([1, 7, 1])
 with input_cols[0]:
     st.markdown('<div class="fix-new-button"></div>', unsafe_allow_html=True)
     button_label = "Loading..." if st.session_state.loading_new_chat else "New chat"
-    if st.button(button_label, help="Tạo chat mới", key="new_chat_btn", use_container_width=True, disabled=st.session_state.loading_new_chat):
+    if st.button(button_label, help="Tạo chat mới", key="new_chat_btn", width="stretch", disabled=st.session_state.loading_new_chat):
         st.session_state.loading_new_chat = True
         st.rerun()
 
@@ -308,7 +308,7 @@ with input_cols[1]:
     prompt = st.chat_input("Nhập câu hỏi về giá nhà hoặc yêu cầu phân tích...", key="chat_input_field")
 with input_cols[2]:
     st.markdown('<div id="fix-chat-button"></div>', unsafe_allow_html=True)
-    btn_form = st.button("Form", help="Nhập Form", key="btn_form_small", use_container_width=True)
+    btn_form = st.button("Form", help="Nhập Form", key="btn_form_small", width="stretch")
     if btn_form:
         st.session_state.show_form = not st.session_state.show_form
         st.rerun()
