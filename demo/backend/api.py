@@ -23,6 +23,9 @@ load_dotenv(Path(__file__).resolve().parent / ".env", override=True)
 from backend.services.location_service import location_service
 
 
+_TRAINING_DONE = False
+
+
 def _run_model_training() -> str:
     """
     Train models before starting the API. Ensures fresh artifacts exist and
@@ -65,6 +68,16 @@ from backend.routes.chat_routes import chat_bp
 
 
 def create_app() -> Flask:
+    global _TRAINING_DONE
+
+    skip_training = os.getenv("SKIP_TRAINING_ON_START", "").lower() in ("1", "true", "yes")
+    if not skip_training and not _TRAINING_DONE:
+        best_model = _run_model_training()
+        print(f"[startup] Train model thanh cong, dung file: {best_model}")
+        _TRAINING_DONE = True
+    elif skip_training:
+        print("[startup] Bo qua train model (SKIP_TRAINING_ON_START=1).")
+
     app = Flask(__name__)
     # Allow all origins for local testing; tighten in prod.
     CORS(app, resources={r"/*": {"origins": "*"}})
@@ -92,13 +105,6 @@ def create_app() -> Flask:
 
 
 if __name__ == "__main__":
-    try:
-        best_model = _run_model_training()
-        print(f"[startup] Train model thanh cong, dung file: {best_model}")
-    except Exception as exc:
-        print(f"[startup] Khong the train model truoc khi khoi dong API: {exc}", file=sys.stderr)
-        sys.exit(1)
-
     app = create_app()
     port = int(os.getenv("PORT", 10000))
-    app.run(host="0.0.0.0", port=port, debug=True)
+    app.run(host="0.0.0.0", port=port, debug=False)
