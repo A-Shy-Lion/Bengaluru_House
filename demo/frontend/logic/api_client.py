@@ -59,3 +59,8 @@ class ApiClient:
             detected_fields=data.get("detected_fields") or {},
             prediction=data.get("prediction"),
         )
+
+    def list_locations(self) -> Dict[str, Any]:
+        """Fetch stored locations (names + counts) from backend storage."""
+        resp = requests.get(f"{self.base_url}/locations", timeout=10)
+        return self._handle_response(resp)

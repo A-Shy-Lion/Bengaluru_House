@@ -25,6 +25,9 @@ def _extract_fields(
         return {}
     import re
 
+    def _normalize_location(val: str) -> str:
+        return " ".join(val.split()).strip().lower()
+
     def _clean_number(val: str) -> str:
         cleaned = re.sub(r"[^\d\.]", "", val.replace(",", ""))
         return cleaned.rstrip(".")
@@ -35,6 +38,7 @@ def _extract_fields(
     for pattern in (
         r"\blocation\s*[:=]\s*([^\n,;]+)",
         r"\bkhu\s*v[uu]c\s*[:=]?\s*([^\n,;]+)",
+        r"\b(?:o|ở|tai|tại|in)\s+([^\n,;]+)",
     ):
         m = re.search(pattern, text, re.IGNORECASE)
         if m and m.group(1):
@@ -42,14 +46,14 @@ def _extract_fields(
             if allowed_lookup is None:
                 found["location"] = candidate
             else:
-                canonical = allowed_lookup.get(candidate.lower())
+                canonical = allowed_lookup.get(_normalize_location(candidate))
                 if canonical:
                     found["location"] = canonical
             break
 
     # Fallback: substring search any known location name in text
     if "location" not in found and allowed_names:
-        lowered = text.lower()
+        lowered = " ".join(text.lower().split())
         matches = [name for name in allowed_names if name and name.lower() in lowered]
         if matches:
             best = max(matches, key=len)
@@ -124,14 +128,44 @@ def chat():
 
     raw_fields = _extract_fields(user_message)
     canonical_fields = _extract_fields(user_message, allowed_lookup=allowed_lookup, allowed_names=allowed_names)
+    if not canonical_fields.get("location"):
+        inferred_loc = location_service.detect_in_text(user_message)
+        if inferred_loc:
+            canonical_fields["location"] = inferred_loc
+            raw_fields.setdefault("location", inferred_loc)
+
+    detected_fields = _merge_fields_from_history(
+        history, allowed_lookup=allowed_lookup, allowed_names=allowed_names
+    )
+    # Ưu tiên giá trị đã chuẩn hóa của lượt hiện tại.
+    for key, val in canonical_fields.items():
+        if val:
+            detected_fields[key] = val
+
+    # Kết hợp với dữ liệu đã lưu trong houses.json (nếu có).
+    existing_house = house_store.get_record_by_session(session_id)
+    if existing_house:
+        for field in ("location", "total_sqft", "bath", "bhk"):
+            if detected_fields.get(field) in (None, "") and existing_house.get(field) not in (None, ""):
+                detected_fields[field] = existing_house.get(field)
+
+    # Lưu lại mọi trường đã biết (kể cả thiếu).
+    persisted_house = house_store.upsert_session_record(
+        session_id,
+        location=detected_fields.get("location"),
+        total_sqft=detected_fields.get("total_sqft"),
+        bath=detected_fields.get("bath"),
+        bhk=detected_fields.get("bhk"),
+        source="chat",
+    )
+    # Đồng bộ detected_fields với bản lưu để trả về client.
+    for field in ("location", "total_sqft", "bath", "bhk"):
+        detected_fields[field] = persisted_house.get(field)
 
     if raw_fields.get("location") and not canonical_fields.get("location"):
         reply = "Mô hình hiện không hỗ trợ khu vực đó. Vui lòng chọn một location hợp lệ trong danh sách."
         history.append({"role": "assistant", "content": reply})
         conversation_store.save_history(session_id, history)
-        detected_fields = _merge_fields_from_history(
-            history, allowed_lookup=allowed_lookup, allowed_names=allowed_names
-        )
         return jsonify(
             {
                 "session_id": session_id,
@@ -142,55 +176,77 @@ def chat():
             }
         )
 
-    detected_fields = _merge_fields_from_history(
-        history, allowed_lookup=allowed_lookup, allowed_names=allowed_names
-    )
     prediction_val = None
     extra_messages = []
+    missing_fields = [f for f in ("location", "total_sqft", "bath", "bhk") if detected_fields.get(f) in (None, "")]
 
-    if _has_full_fields(detected_fields):
+    if not missing_fields:
         try:
-            prediction_val = house_price_service.predict(
-                location=detected_fields["location"],
-                total_sqft=float(detected_fields["total_sqft"]),
-                bath=int(detected_fields["bath"]),
-                bhk=int(detected_fields["bhk"]),
-            )
-            # Lưu lại đầu vào/kết quả vào local storage.
-            house_store.add_record(
-                location=detected_fields["location"],
-                total_sqft=float(detected_fields["total_sqft"]),
-                bath=int(detected_fields["bath"]),
-                bhk=int(detected_fields["bhk"]),
-                predicted_price_lakh=prediction_val,
-                source="chat",
-            )
-            # Provide a hidden assistant message so LLM can phrase the answer with the model result.
+            total_sqft_val = float(detected_fields["total_sqft"])
+            bath_val = int(detected_fields["bath"])
+            bhk_val = int(detected_fields["bhk"])
+            ready_for_prediction = True
+        except (ValueError, TypeError):
+            ready_for_prediction = False
             extra_messages.append(
                 {
                     "role": "assistant",
-                    "content": (
-                        f"[Kết quả mô hình] location={detected_fields['location']}, "
-                        f"total_sqft={detected_fields['total_sqft']}, "
-                        f"bath={detected_fields['bath']}, "
-                        f"bhk={detected_fields['bhk']}, "
-                        f"giá dự đoán (lakh)={prediction_val:.2f}."
-                    ),
+                    "content": "[Thiếu/không hợp lệ] Vui lòng cung cấp số hợp lệ cho total_sqft, bath, bhk để dự đoán.",
                 }
             )
-            extra_messages.append(
-                {
-                    "role": "user",
-                    "content": "Hãy báo kết quả dự đoán trên cho người dùng bằng tiếng Việt, kèm giải thích ngắn gọn.",
-                }
-            )
-        except Exception as exc:  # pragma: no cover - runtime safety
-            extra_messages.append(
-                {
-                    "role": "assistant",
-                    "content": f"[Lỗi dự đoán] Không thể chạy mô hình: {exc}",
-                }
-            )
+        if ready_for_prediction:
+            try:
+                prediction_val = house_price_service.predict(
+                    location=detected_fields["location"],
+                    total_sqft=total_sqft_val,
+                    bath=bath_val,
+                    bhk=bhk_val,
+                )
+                # Lưu lại đầu vào/kết quả vào local storage (cập nhật record session).
+                persisted_house = house_store.upsert_session_record(
+                    session_id,
+                    location=detected_fields["location"],
+                    total_sqft=total_sqft_val,
+                    bath=bath_val,
+                    bhk=bhk_val,
+                    predicted_price_lakh=prediction_val,
+                    source="chat",
+                )
+                detected_fields.update({k: persisted_house.get(k) for k in ("location", "total_sqft", "bath", "bhk")})
+                # Provide a hidden assistant message so LLM can phrase the answer with the model result.
+                extra_messages.append(
+                    {
+                        "role": "assistant",
+                        "content": (
+                            f"[Kết quả mô hình] location={detected_fields['location']}, "
+                            f"total_sqft={detected_fields['total_sqft']}, "
+                            f"bath={detected_fields['bath']}, "
+                            f"bhk={detected_fields['bhk']}, "
+                            f"giá dự đoán (lakh)={prediction_val:.2f}."
+                        ),
+                    }
+                )
+                extra_messages.append(
+                    {
+                        "role": "user",
+                        "content": "Hãy báo kết quả dự đoán trên cho người dùng bằng tiếng Việt, kèm giải thích ngắn gọn.",
+                    }
+                )
+            except Exception as exc:  # pragma: no cover - runtime safety
+                extra_messages.append(
+                    {
+                        "role": "assistant",
+                        "content": f"[Lỗi dự đoán] Không thể chạy mô hình: {exc}",
+                    }
+                )
+    else:
+        extra_messages.append(
+            {
+                "role": "assistant",
+                "content": f"[Thiếu thông tin] Còn thiếu: {', '.join(missing_fields)}. "
+                "Hãy hỏi người dùng bổ sung trước khi dự đoán.",
+            }
+        )
 
     try:
         reply = asyncio.run(llm_service.chat(history + extra_messages))
@@ -306,7 +362,7 @@ def list_locations():
     return jsonify(
         {
             "locations": locations,
-            "names": [item.get("name") for item in locations if item.get("name")],
+            "names": location_service.get_location_names(),
         }
     )
 

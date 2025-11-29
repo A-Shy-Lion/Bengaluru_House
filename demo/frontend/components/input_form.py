@@ -22,6 +22,7 @@ def show_input_form(locations_list):
             sqft = st.number_input(
                 "Diện tích (sqft)",
                 min_value=300.0,
+                value=1000.0,
                 step=10.0,
                 format="%.1f",
                 help="Đơn vị Square Feet. Tối thiểu 300.",

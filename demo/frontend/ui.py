@@ -54,11 +54,34 @@ st.session_state.setdefault("api_base", os.getenv("API_BASE_URL", DEFAULT_API_BA
 st.session_state.setdefault("form_memory", {})
 st.session_state.setdefault("pending_form_message", None)
 st.session_state.setdefault("show_market_analytics", False)
+st.session_state.setdefault("locations_cache", None)
+st.session_state.setdefault("locations_error", None)
 # Nếu trước đây đang dùng đường dẫn tương đối /api (không proxy), chuyển sang localhost mặc định
 if st.session_state.api_base == "/api":
     st.session_state.api_base = "http://localhost:5000/api"
 
 api_client = ApiClient(st.session_state.api_base)
+
+
+def load_locations(force: bool = False) -> List[str]:
+    """
+    Cache location names from backend storage so the form always mirrors locations.json.
+    """
+    if st.session_state.locations_cache is not None and not force:
+        return st.session_state.locations_cache
+    try:
+        data = api_client.list_locations()
+        names = data.get("names") or [
+            item.get("name")
+            for item in data.get("locations", [])
+            if item.get("name")
+        ]
+        st.session_state.locations_cache = names
+        st.session_state.locations_error = None
+    except Exception as exc:  # pragma: no cover - runtime guard
+        st.session_state.locations_cache = []
+        st.session_state.locations_error = str(exc)
+    return st.session_state.locations_cache
 
 
 def set_status(text: str) -> None:
@@ -133,6 +156,7 @@ def render_detected_fields() -> None:
 
 # Đồng bộ lịch sử nếu đã có session id (lưu trong local state)
 sync_history_once()
+load_locations()
 
 # Biến kiểm tra trạng thái trang
 is_landing_page = len(st.session_state.messages) == 0
@@ -144,7 +168,10 @@ with st.sidebar:
     if api_base_input.rstrip("/") != st.session_state.api_base.rstrip("/"):
         st.session_state.api_base = api_base_input.rstrip("/")
         st.session_state.history_loaded = False
+        st.session_state.locations_cache = None
+        st.session_state.locations_error = None
         api_client = ApiClient(st.session_state.api_base)
+        load_locations(force=True)
     st.caption(f"Phiên: {st.session_state.session_id or 'mới'}")
     render_detected_fields()
     if st.button("Xóa hội thoại và tạo phiên mới"):
@@ -288,40 +315,14 @@ with input_cols[2]:
 # --- FORM NHẬP LIỆU ---
 if st.session_state.show_form:
     with st.container():
-        locations_list = [
-            "Electronic City",
-            "Whitefield",
-            "Sarjapur Road",
-            "Kanakpura Road",
-            "Thanisandra",
-            "Yelahanka",
-            "Uttarahalli",
-            "Hebbal",
-            "Marathahalli",
-            "Raja Rajeshwari Nagar",
-            "Hennur Road",
-            "Bannerghatta Road",
-            "7th Phase JP Nagar",
-            "Haralur Road",
-            "Varthur",
-            "Chandapura",
-            "Koramangala",
-            "Kaggadasapura",
-            "Bellandur",
-            "Begur Road",
-            "HSR Layout",
-            "Kasavanhalli",
-            "Electronics City Phase 1",
-            "KR Puram",
-            "Harlur",
-            "Rajaji Nagar",
-            "Hulimavu",
-            "BTM Layout",
-            "Ramamurthy Nagar",
-            "Hosa Road",
-            "Other",
-        ]
-        form_data = show_input_form(locations_list)
+        locations_list = load_locations()
+        if st.session_state.locations_error:
+            st.warning(f"Không tải được danh sách location: {st.session_state.locations_error}")
+        if not locations_list:
+            st.info("Danh sách location đang trống. Vui lòng kiểm tra backend hoặc file locations.json.")
+            form_data = None
+        else:
+            form_data = show_input_form(locations_list)
 
         if form_data:
             missing = [k for k, v in form_data.items() if v in (None, "")]

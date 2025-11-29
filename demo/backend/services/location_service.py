@@ -6,6 +6,10 @@ from typing import Dict, List, Optional
 
 
 class LocationService:
+    def _normalize_name(self, name: str) -> str:
+        """Trim and collapse whitespace so lookups are resilient to spacing differences."""
+        return " ".join(str(name).split()).strip()
+
     """
     Manage location options derived from the training dataset.
 
@@ -37,11 +41,30 @@ class LocationService:
         return {"locations": []}
 
     def get_locations(self) -> List[Dict[str, object]]:
+        """
+        Return normalized, de-duplicated locations sorted by count desc.
+        Names are normalized to avoid double-space/casing glitches in raw data.
+        """
         data = self._load()
-        return data.get("locations", [])
+        merged: Dict[str, Dict[str, object]] = {}
+        for item in data.get("locations", []):
+            name = self._normalize_name(item.get("name", ""))
+            if not name:
+                continue
+            try:
+                count = int(item.get("count", 0))
+            except (TypeError, ValueError):
+                count = 0
+            existing = merged.get(name)
+            if existing:
+                existing["count"] = max(int(existing.get("count", 0)), count)
+            else:
+                merged[name] = {"name": name, "count": count}
+
+        return sorted(merged.values(), key=lambda item: int(item.get("count", 0)), reverse=True)
 
     def get_location_names(self) -> List[str]:
-        return [str(item.get("name", "")).strip() for item in self.get_locations() if item.get("name")]
+        return [self._normalize_name(item.get("name", "")) for item in self.get_locations() if item.get("name")]
 
     def get_lookup(self) -> Dict[str, str]:
         """Lowercase lookup mapping for validation."""
@@ -56,8 +79,8 @@ class LocationService:
             return None
         names = self.get_location_names()
         lookup = self.get_lookup()
-        lowered = text.lower()
-        matches = [name for name in names if name and name.lower() in lowered]
+        normalized_text = " ".join(text.lower().split())
+        matches = [name for name in names if name and name.lower() in normalized_text]
         if not matches:
             return None
         best = max(matches, key=len)
@@ -71,7 +94,7 @@ class LocationService:
         if not location:
             return None
         lookup = self.get_lookup()
-        return lookup.get(location.strip().lower())
+        return lookup.get(self._normalize_name(location).lower())
 
 
 location_service = LocationService()

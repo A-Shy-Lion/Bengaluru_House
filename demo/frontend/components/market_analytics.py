@@ -1,47 +1,69 @@
-import streamlit as st
-import pandas as pd
-import numpy as np
-import plotly.express as px
-import plotly.graph_objects as go
+import sys
 from pathlib import Path
 
+import numpy as np
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
+import streamlit as st
+
+def _resolve_root() -> Path:
+    return Path(__file__).resolve().parents[3]
+
+
 def load_market_data():
-    """Load and process Bengaluru house data for market analytics"""
+    """Nạp và làm sạch dữ liệu bằng pipeline trong src/preprocessing (nếu khả dụng)."""
+    data_path = _resolve_root() / "data" / "Bengaluru_House_Data.csv"
+    if not data_path.exists():
+        st.error(f"Không tìm thấy dữ liệu tại {data_path}")
+        return None
+
+    preprocessor = None
     try:
-        data_path = Path(__file__).parent.parent.parent.parent / "data" / "Bengaluru_House_Data.csv"
-        df = pd.read_csv(data_path)
-        
-        # Clean and process data
-        df = df.dropna(subset=['location', 'price', 'size'])
-        df['price'] = pd.to_numeric(df['price'], errors='coerce')
-        df = df[df['price'] > 0]
-        
-        # Extract BHK from size
-        df['bhk'] = df['size'].str.extract('(\d+)').astype(float)
-        df = df.dropna(subset=['bhk'])
-        
-        # Clean total_sqft
+        root = _resolve_root()
+        for p in (root, root / "src"):
+            if str(p) not in sys.path:
+                sys.path.insert(0, str(p))
+        from src.preprocessing import BengaluruPreprocessor  # type: ignore
+
+        preprocessor = BengaluruPreprocessor()
+    except Exception as exc:  # pragma: no cover - runtime guard
+        st.warning(f"Không import được BengaluruPreprocessor, sẽ làm sạch đơn giản: {exc}")
+
+    try:
+        df_raw = pd.read_csv(data_path)
+        if preprocessor:
+            df_clean = preprocessor.clean_dataframe(df_raw)
+            df_clean = df_clean.rename(columns={"BHK": "bhk"})
+            return df_clean
+
+        # Fallback cleaning
+        df = df_raw.dropna(subset=["location", "price", "size"])
+        df["price"] = pd.to_numeric(df["price"], errors="coerce")
+        df = df[df["price"] > 0]
+        df["bhk"] = pd.to_numeric(df["size"].str.extract(r"(\d+)")[0], errors="coerce")
+        df = df.dropna(subset=["bhk"])
+
         def parse_sqft(x):
             if pd.isna(x):
                 return None
             x = str(x).strip()
-            if '-' in x:
-                parts = x.split('-')
+            if "-" in x:
+                parts = x.split("-")
                 try:
                     return (float(parts[0]) + float(parts[1])) / 2
-                except:
+                except Exception:
                     return None
             try:
                 return float(x)
-            except:
+            except Exception:
                 return None
-        
-        df['total_sqft_clean'] = df['total_sqft'].apply(parse_sqft)
-        df = df.dropna(subset=['total_sqft_clean'])
-        df = df[df['total_sqft_clean'] > 0]
-        
+
+        df["total_sqft"] = df["total_sqft"].apply(parse_sqft)
+        df = df.dropna(subset=["total_sqft"])
+        df = df[df["total_sqft"] > 0]
         return df
-    except Exception as e:
+    except Exception as e:  # pragma: no cover - runtime guard
         st.error(f"Không thể tải dữ liệu: {e}")
         return None
 
@@ -252,20 +274,20 @@ def render_market_analytics_sidebar():
             top_locations = df['location'].nunique()
             bhk_types = int(df['bhk'].nunique())
             
-            # Header with close button
+            # Header với nút đóng
             col1, col2 = st.columns([4, 1])
             with col1:
                 st.markdown("""
                     <div class="market-analytics-header">
                         <div>
-                            <h2 class="market-analytics-title">Market Analytics Dashboard</h2>
-                            <p class="market-analytics-subtitle">Real-time insights from Bengaluru housing market data</p>
+                            <h2 class="market-analytics-title">Bảng phân tích thị trường</h2>
+                            <p class="market-analytics-subtitle">Dữ liệu đã làm sạch từ pipeline src/preprocessing</p>
                         </div>
                     </div>
                 """, unsafe_allow_html=True)
             with col2:
-                # Close button in Streamlit
-                if st.button("✕ Close", key="close_market_btn", help="Close analytics panel"):
+                # Nút đóng trong Streamlit
+                if st.button("✕ Đóng", key="close_market_btn", help="Đóng bảng phân tích"):
                     st.session_state.show_market_analytics = False
                     st.rerun()
             
@@ -273,23 +295,23 @@ def render_market_analytics_sidebar():
             st.markdown(f"""
                 <div class="stats-grid">
                     <div class="stat-card total-properties">
-                        <div class="stat-label">Total Properties</div>
+                        <div class="stat-label">Số bản ghi</div>
                         <div class="stat-value">{total_properties:,}</div>
                     </div>
                     <div class="stat-card top-locations">
-                        <div class="stat-label">Top Locations</div>
+                        <div class="stat-label">Số khu vực</div>
                         <div class="stat-value">{top_locations}</div>
                     </div>
                     <div class="stat-card bhk-types">
-                        <div class="stat-label">BHK Types</div>
+                        <div class="stat-label">Loại BHK</div>
                         <div class="stat-value">{bhk_types}</div>
                     </div>
                 </div>
             """, unsafe_allow_html=True)
             
-            # Chart 1: Price Trends by BHK
+            # Chart 1: Giá trung bình theo BHK
             st.markdown('<div class="chart-container">', unsafe_allow_html=True)
-            st.markdown('<h4 class="chart-title">📊 Price Trends by BHK</h4>', unsafe_allow_html=True)
+            st.markdown('<h4 class="chart-title">📊 Giá trung bình theo BHK</h4>', unsafe_allow_html=True)
             
             bhk_data = df.groupby('bhk')['price'].mean().reset_index()
             bhk_data = bhk_data[bhk_data['bhk'] <= 6]  # Limit to 6 BHK
@@ -305,7 +327,7 @@ def render_market_analytics_sidebar():
                     text=bhk_data['price'].round(2),
                     texttemplate='%{text}L',
                     textposition='outside',
-                    hovertemplate='BHK: %{x}<br>Avg Price: %{y:.2f} Lakhs<extra></extra>'
+                    hovertemplate='BHK: %{x}<br>Giá trung bình: %{y:.2f} Lakh<extra></extra>'
                 )
             ])
             
@@ -315,13 +337,13 @@ def render_market_analytics_sidebar():
                 plot_bgcolor='rgba(0,0,0,0)',
                 font=dict(color='#a7b4d9', size=12),
                 xaxis=dict(
-                    title="BHK Type",
+                    title="Loại BHK",
                     gridcolor='rgba(255, 255, 255, 0.05)',
                     showgrid=True,
                     tickmode='linear'
                 ),
                 yaxis=dict(
-                    title="Avg Price (Lakhs)",
+                    title="Giá trung bình (Lakh)",
                     gridcolor='rgba(255, 255, 255, 0.05)',
                     showgrid=True
                 ),
@@ -333,9 +355,9 @@ def render_market_analytics_sidebar():
             st.plotly_chart(fig_bhk, use_container_width=True, config={'displayModeBar': False})
             st.markdown('</div>', unsafe_allow_html=True)
             
-            # Chart 2: Top 10 Locations
+            # Chart 2: Top 10 khu vực nhiều dữ liệu
             st.markdown('<div class="chart-container">', unsafe_allow_html=True)
-            st.markdown('<h4 class="chart-title">📍 Top 10 Locations</h4>', unsafe_allow_html=True)
+            st.markdown('<h4 class="chart-title">📍 Top 10 khu vực nhiều dữ liệu</h4>', unsafe_allow_html=True)
             
             location_data = df.groupby('location').size().sort_values(ascending=False).head(10).reset_index()
             location_data.columns = ['location', 'count']
@@ -354,7 +376,7 @@ def render_market_analytics_sidebar():
                     ),
                     text=location_data['count'][::-1],
                     textposition='outside',
-                    hovertemplate='%{y}<br>Properties: %{x}<extra></extra>'
+                    hovertemplate='%{y}<br>Số bản ghi: %{x}<extra></extra>'
                 )
             ])
             
@@ -364,7 +386,7 @@ def render_market_analytics_sidebar():
                 plot_bgcolor='rgba(0,0,0,0)',
                 font=dict(color='#a7b4d9', size=11),
                 xaxis=dict(
-                    title="Number of Properties",
+                    title="Số bản ghi",
                     gridcolor='rgba(255, 255, 255, 0.05)',
                     showgrid=True
                 ),
@@ -380,9 +402,9 @@ def render_market_analytics_sidebar():
             st.plotly_chart(fig_location, use_container_width=True, config={'displayModeBar': False})
             st.markdown('</div>', unsafe_allow_html=True)
             
-            # Chart 3: Feature Importance
+            # Chart 3: Đặc trưng ảnh hưởng (minh họa)
             st.markdown('<div class="chart-container">', unsafe_allow_html=True)
-            st.markdown('<h4 class="chart-title">📈 Feature Importance</h4>', unsafe_allow_html=True)
+            st.markdown('<h4 class="chart-title">📈 Đặc trưng ảnh hưởng (minh họa)</h4>', unsafe_allow_html=True)
             
             # Calculate feature importance based on correlation
             correlation_data = pd.DataFrame({
@@ -404,7 +426,7 @@ def render_market_analytics_sidebar():
                     text=correlation_data['importance'][::-1],
                     texttemplate='%{text}%',
                     textposition='outside',
-                    hovertemplate='%{y}<br>Importance: %{x}%<extra></extra>'
+                    hovertemplate='%{y}<br>Tầm quan trọng: %{x}%<extra></extra>'
                 )
             ])
             
@@ -414,7 +436,7 @@ def render_market_analytics_sidebar():
                 plot_bgcolor='rgba(0,0,0,0)',
                 font=dict(color='#a7b4d9', size=11),
                 xaxis=dict(
-                    title="Importance %",
+                    title="Tầm quan trọng (%)",
                     gridcolor='rgba(255, 255, 255, 0.05)',
                     showgrid=True,
                     range=[0, 100]
@@ -431,9 +453,9 @@ def render_market_analytics_sidebar():
             st.plotly_chart(fig_importance, use_container_width=True, config={'displayModeBar': False})
             st.markdown('</div>', unsafe_allow_html=True)
             
-            # Chart 4: Price Distribution by Location
+            # Chart 4: Phân bổ giá theo khu vực
             st.markdown('<div class="chart-container">', unsafe_allow_html=True)
-            st.markdown('<h4 class="chart-title">🏘️ Price Distribution by Location</h4>', unsafe_allow_html=True)
+            st.markdown('<h4 class="chart-title">🏘️ Phân bổ giá trung bình theo khu vực</h4>', unsafe_allow_html=True)
             
             # Top locations by average price
             top_price_locations = df.groupby('location')['price'].mean().sort_values(ascending=False).head(6)
@@ -449,7 +471,7 @@ def render_market_analytics_sidebar():
                     ),
                     textinfo='label+percent',
                     textfont=dict(size=11, color='#e9edff'),
-                    hovertemplate='%{label}<br>Avg Price: %{value:.2f}L<br>%{percent}<extra></extra>'
+                    hovertemplate='%{label}<br>Giá TB: %{value:.2f}L<br>%{percent}<extra></extra>'
                 )
             ])
             
@@ -474,7 +496,7 @@ def render_market_analytics_sidebar():
             st.plotly_chart(fig_pie, use_container_width=True, config={'displayModeBar': False})
             st.markdown('</div>', unsafe_allow_html=True)
             
-            # Key Insights
+            # Thông tin nhanh
             avg_price_2bhk = bhk_data[bhk_data['bhk'] == 2]['price'].values[0] if len(bhk_data[bhk_data['bhk'] == 2]) > 0 else 0
             avg_price_3bhk = bhk_data[bhk_data['bhk'] == 3]['price'].values[0] if len(bhk_data[bhk_data['bhk'] == 3]) > 0 else 0
             
@@ -483,8 +505,8 @@ def render_market_analytics_sidebar():
                 
                 st.markdown(f"""
                     <div class="insight-box">
-                        <div class="insight-title">💡 Key Market Insights</div>
-                        <div class="insight-item">Price increases with BHK: from 2 BHK to 3 BHK ~{price_increase:.0f}%</div>
-                        <div class="insight-item">Location accounts for 45% of price variance</div>
+                        <div class="insight-title">💡 Góc nhìn nhanh</div>
+                        <div class="insight-item">Giá tăng theo BHK: 2 ➜ 3 BHK khoảng {price_increase:.0f}%</div>
+                        <div class="insight-item">Vị trí là yếu tố chính ảnh hưởng giá (minh họa)</div>
                     </div>
                 """, unsafe_allow_html=True)
