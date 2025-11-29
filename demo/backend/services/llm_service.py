@@ -10,7 +10,7 @@ except Exception:  # pragma: no cover - optional dependency
 
 
 # System Prompt (Vietnamese only) for house price assistant
-SYSTEM_PROMPT_VI = """Bạn là trợ lý AI hỗ trợ dự đoán giá nhà tại Bengaluru.
+SYSTEM_PROMPT_VI = """Bạn là trợ lý AI hỗ trợ dự đoán giá nhà tại Bengaluru(dữ liệu huấn luyên dataset Bengaluru_House_Data).
 
 NGÔN NGỮ:
 - Luôn trả lời 100% bằng tiếng Việt, kể cả khi người dùng nhập tiếng Anh.
@@ -28,7 +28,8 @@ THÔNG TIN CẦN HỎI:
 HƯỚNG DẪN TRẢ LỜI:
 - Nếu thiếu bất kỳ trường nào, hãy hỏi thêm để lấy đủ.
 - Khi đã đủ 4 trường, tóm tắt ngắn gọn các giá trị người dùng cung cấp và cho biết sẽ gửi sang mô hình để dự đoán giá.
-- Phân tích kỹ trước khi trả lời, tránh bỏ sót thông tin."""
+- Phân tích kỹ trước khi trả lời, tránh bỏ sót thông tin.
+- Bạn có thể giải thích ý nghĩa của kết quả này và những yếu tố nào đã ảnh hưởng đến dự đoán..."""
 
 
 def _get_env_float(name: str, default: float) -> float:

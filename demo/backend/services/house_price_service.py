@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib
+import os
 import sys
 from pathlib import Path
 from typing import Optional
@@ -33,21 +34,26 @@ class HousePriceService:
         model_path: Optional[Path | str] = None,
         preprocessor_path: Optional[Path | str] = None,
     ) -> None:
-        default_model = PROJECT_ROOT / "models" / "linear_regression_BengaluruHouse.pkl"
         default_preprocessor = PROJECT_ROOT / "models" / "preprocessor.pkl"
-        self.model_path = Path(model_path) if model_path else default_model
+        self.model_path = Path(model_path) if model_path else None
         self.preprocessor_path = Path(preprocessor_path) if preprocessor_path else default_preprocessor
         self._model = None
         self._preprocessor = None
 
+    def _resolve_paths(self) -> None:
+        if self.model_path is None:
+            model_name = os.getenv("HOUSE_MODEL_FILENAME") or "linear_regression_BengaluruHouse.pkl"
+            self.model_path = PROJECT_ROOT / "models" / model_name
+
     def _load(self) -> None:
+        self._resolve_paths()
         if self._model is None:
             if not self.model_path.exists():
-                raise FileNotFoundError(f"Không tìm thấy model tại {self.model_path}")
+                raise FileNotFoundError(f"Khong tim thay model tai {self.model_path}")
             self._model = joblib.load(self.model_path)
         if self._preprocessor is None:
             if not self.preprocessor_path.exists():
-                raise FileNotFoundError(f"Không tìm thấy preprocessor tại {self.preprocessor_path}")
+                raise FileNotFoundError(f"Khong tim thay preprocessor tai {self.preprocessor_path}")
             self._preprocessor = joblib.load(self.preprocessor_path)
 
     def predict(self, *, location: str, total_sqft: float, bath: int, bhk: int) -> float:

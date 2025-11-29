@@ -20,6 +20,47 @@ load_dotenv(ROOT_DIR / ".env")
 load_dotenv(DEMO_DIR / ".env", override=True)
 load_dotenv(Path(__file__).resolve().parent / ".env", override=True)
 
+from backend.services.location_service import location_service
+
+
+def _run_model_training() -> str:
+    """
+    Train models before starting the API. Ensures fresh artifacts exist and
+    records the chosen model filename in env for downstream services.
+    """
+    from src.modeling import ModelTrainer
+
+    data_path = ROOT_DIR / "data" / "Bengaluru_House_Data.csv"
+    if not data_path.exists():
+        raise FileNotFoundError(f"Khong tim thay data tai {data_path}")
+
+    trainer = ModelTrainer()
+    models, metrics = trainer.train_models(str(data_path))
+    best_file = trainer.save_artifacts(models, metrics, model_dir=ROOT_DIR / "models")
+    # Cho HousePriceService biet model nao da duoc luu.
+    os.environ["HOUSE_MODEL_FILENAME"] = best_file
+
+    # Xay dung danh sach location theo tan suat va luu vao storage cho frontend/backend.
+    df_clean = trainer.preprocessor.clean_dataframe(trainer.preprocessor.load_raw(str(data_path)))
+    counts = df_clean["location"].value_counts()
+    locations_payload = [
+        {"name": name, "count": int(count)}
+        for name, count in counts.items()
+        if name != "other"
+    ]
+    location_service.save_locations(locations_payload)
+
+    # In ket qua huan luyen ra console de de quan sat.
+    for name, metric in metrics.items():
+        cv_display = f"{metric.cv_r2:.3f}" if metric.cv_r2 is not None else "n/a"
+        print(
+            f"{name}: RMSE={metric.rmse:.2f}, MAE={metric.mae:.2f}, "
+            f"R2={metric.r2:.3f}, CV_R2={cv_display}"
+        )
+    print(f"Saved best model as: {best_file}")
+    return best_file
+
+
 from backend.routes.chat_routes import chat_bp
 
 
@@ -51,6 +92,13 @@ def create_app() -> Flask:
 
 
 if __name__ == "__main__":
+    try:
+        best_model = _run_model_training()
+        print(f"[startup] Train model thanh cong, dung file: {best_model}")
+    except Exception as exc:
+        print(f"[startup] Khong the train model truoc khi khoi dong API: {exc}", file=sys.stderr)
+        sys.exit(1)
+
     app = create_app()
     port = int(os.getenv("PORT", 10000))
     app.run(host="0.0.0.0", port=port, debug=True)

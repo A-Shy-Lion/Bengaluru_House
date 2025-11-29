@@ -5,15 +5,21 @@ from flask import Blueprint, jsonify, request
 
 from backend.services.llm_service import llm_service
 from backend.services.house_price_service import house_price_service
+from backend.services.location_service import location_service
 from backend.storage.local_storage import conversation_store, house_store
 
 chat_bp = Blueprint("chat", __name__)
 
 
-def _extract_fields(text: str) -> dict:
+def _extract_fields(
+    text: str,
+    *,
+    allowed_lookup: dict[str, str] | None = None,
+    allowed_names: list[str] | None = None,
+) -> dict:
     """
-    Extract house-price fields from arbitrary text.
-    More robust regex-based parser so user or LLM phrasing is captured reliably.
+    Extract house-price fields from arbitrary text, with optional validation
+    against allowed locations and a substring fallback for known names.
     """
     if not text:
         return {}
@@ -28,12 +34,26 @@ def _extract_fields(text: str) -> dict:
     # Location patterns
     for pattern in (
         r"\blocation\s*[:=]\s*([^\n,;]+)",
-        r"\bkhu\s*v[uư]c\s*[:=]?\s*([^\n,;]+)",
+        r"\bkhu\s*v[uu]c\s*[:=]?\s*([^\n,;]+)",
     ):
         m = re.search(pattern, text, re.IGNORECASE)
         if m and m.group(1):
-            found["location"] = m.group(1).strip()
+            candidate = m.group(1).strip()
+            if allowed_lookup is None:
+                found["location"] = candidate
+            else:
+                canonical = allowed_lookup.get(candidate.lower())
+                if canonical:
+                    found["location"] = canonical
             break
+
+    # Fallback: substring search any known location name in text
+    if "location" not in found and allowed_names:
+        lowered = text.lower()
+        matches = [name for name in allowed_names if name and name.lower() in lowered]
+        if matches:
+            best = max(matches, key=len)
+            found["location"] = allowed_lookup.get(best.lower(), best) if allowed_lookup else best
 
     # total_sqft patterns (allow commas/decimals and unit mentions)
     for pattern in (
@@ -68,12 +88,17 @@ def _extract_fields(text: str) -> dict:
     return found
 
 
-def _merge_fields_from_history(history: list[dict]) -> dict:
+def _merge_fields_from_history(
+    history: list[dict],
+    *,
+    allowed_lookup: dict[str, str] | None = None,
+    allowed_names: list[str] | None = None,
+) -> dict:
     """Walk through conversation messages in order and keep latest seen values."""
     merged: dict[str, str] = {}
     for msg in history:
         content = msg.get("content", "")
-        merged.update(_extract_fields(content))
+        merged.update(_extract_fields(content, allowed_lookup=allowed_lookup, allowed_names=allowed_names))
     return merged
 
 
@@ -87,15 +112,39 @@ def chat():
     payload = request.get_json(silent=True) or {}
     user_message = (payload.get("message") or "").strip()
     session_id = (payload.get("session_id") or "").strip() or conversation_store.new_session()
-    # luon mac dinh tieng Viet
+    allowed_lookup = location_service.get_lookup()
+    allowed_names = location_service.get_location_names()
+    # luôn mặc định tiếng Việt
 
     if not user_message:
-        return jsonify({"error": "Thieu 'message' tu nguoi dung"}), 400
+        return jsonify({"error": "Thiếu 'message' từ người dùng"}), 400
 
     history = conversation_store.get_history(session_id)
     history.append({"role": "user", "content": user_message})
 
-    detected_fields = _merge_fields_from_history(history)
+    raw_fields = _extract_fields(user_message)
+    canonical_fields = _extract_fields(user_message, allowed_lookup=allowed_lookup, allowed_names=allowed_names)
+
+    if raw_fields.get("location") and not canonical_fields.get("location"):
+        reply = "Mô hình hiện không hỗ trợ khu vực đó. Vui lòng chọn một location hợp lệ trong danh sách."
+        history.append({"role": "assistant", "content": reply})
+        conversation_store.save_history(session_id, history)
+        detected_fields = _merge_fields_from_history(
+            history, allowed_lookup=allowed_lookup, allowed_names=allowed_names
+        )
+        return jsonify(
+            {
+                "session_id": session_id,
+                "reply": reply,
+                "history": history,
+                "detected_fields": detected_fields,
+                "prediction": None,
+            }
+        )
+
+    detected_fields = _merge_fields_from_history(
+        history, allowed_lookup=allowed_lookup, allowed_names=allowed_names
+    )
     prediction_val = None
     extra_messages = []
 
@@ -106,6 +155,15 @@ def chat():
                 total_sqft=float(detected_fields["total_sqft"]),
                 bath=int(detected_fields["bath"]),
                 bhk=int(detected_fields["bhk"]),
+            )
+            # Lưu lại đầu vào/kết quả vào local storage.
+            house_store.add_record(
+                location=detected_fields["location"],
+                total_sqft=float(detected_fields["total_sqft"]),
+                bath=int(detected_fields["bath"]),
+                bhk=int(detected_fields["bhk"]),
+                predicted_price_lakh=prediction_val,
+                source="chat",
             )
             # Provide a hidden assistant message so LLM can phrase the answer with the model result.
             extra_messages.append(
@@ -137,13 +195,15 @@ def chat():
     try:
         reply = asyncio.run(llm_service.chat(history + extra_messages))
     except Exception as exc:  # pragma: no cover - runtime safety
-        return jsonify({"error": f"Khong goi duoc LLM: {exc}"}), 500
+        return jsonify({"error": f"Không gọi được LLM: {exc}"}), 500
 
     history.append({"role": "assistant", "content": reply})
     conversation_store.save_history(session_id, history)
 
     # Recompute detected fields including the assistant reply so the frontend can persist latest values.
-    detected_fields = _merge_fields_from_history(history)
+    detected_fields = _merge_fields_from_history(
+        history, allowed_lookup=allowed_lookup, allowed_names=allowed_names
+    )
 
     return jsonify(
         {
@@ -158,14 +218,18 @@ def chat():
 
 @chat_bp.route("/api/chat/<session_id>", methods=["GET"])
 def get_history(session_id: str):
+    allowed_lookup = location_service.get_lookup()
+    allowed_names = location_service.get_location_names()
     history = conversation_store.get_history(session_id)
     if not history:
-        return jsonify({"error": "Khong tim thay phien chat"}), 404
+        return jsonify({"error": "Không tìm thấy phiên chat"}), 404
     return jsonify(
         {
             "session_id": session_id,
             "history": history,
-            "detected_fields": _merge_fields_from_history(history),
+            "detected_fields": _merge_fields_from_history(
+                history, allowed_lookup=allowed_lookup, allowed_names=allowed_names
+            ),
         }
     )
 
@@ -188,18 +252,22 @@ def predict_house():
     if bhk is None:
         missing.append("bhk")
     if missing:
-        return jsonify({"error": f"Thieu truong: {', '.join(missing)}"}), 400
+        return jsonify({"error": f"Thiếu trường: {', '.join(missing)}"}), 400
+
+    canonical_location = location_service.canonicalize(location)
+    if not canonical_location:
+        return jsonify({"error": "Khu vực không hợp lệ"}), 400
 
     try:
         total_sqft_val = float(total_sqft)
         bath_val = int(bath)
         bhk_val = int(bhk)
     except (ValueError, TypeError):
-        return jsonify({"error": "Dinh dang so khong hop le"}), 400
+        return jsonify({"error": "Định dạng số không hợp lệ"}), 400
 
     try:
         price = house_price_service.predict(
-            location=location,
+            location=canonical_location,
             total_sqft=total_sqft_val,
             bath=bath_val,
             bhk=bhk_val,
@@ -207,10 +275,10 @@ def predict_house():
     except FileNotFoundError as fnf:
         return jsonify({"error": str(fnf)}), 500
     except Exception as exc:  # pragma: no cover
-        return jsonify({"error": f"Khong the du doan: {exc}"}), 500
+        return jsonify({"error": f"Không thể dự đoán: {exc}"}), 500
 
     record = house_store.add_record(
-        location=location,
+        location=canonical_location,
         total_sqft=total_sqft_val,
         bath=bath_val,
         bhk=bhk_val,
@@ -221,13 +289,24 @@ def predict_house():
     return jsonify(
         {
             "input": {
-                "location": location,
+                "location": canonical_location,
                 "total_sqft": total_sqft_val,
                 "bath": bath_val,
                 "bhk": bhk_val,
             },
             "predicted_price_lakh": price,
             "record_id": record["id"],
+        }
+    )
+
+
+@chat_bp.route("/api/locations", methods=["GET"])
+def list_locations():
+    locations = location_service.get_locations()
+    return jsonify(
+        {
+            "locations": locations,
+            "names": [item.get("name") for item in locations if item.get("name")],
         }
     )
 
