@@ -1,0 +1,28 @@
+{
+  "history": [
+    {
+      "model_name": "linear_regression",
+      "model_filename": "linear_regression_BengaluruHouse.pkl",
+      "metrics": {
+        "rmse": 34.93341794398695,
+        "mape": 20.496817225531462,
+        "cv_r2": 0.8214588202058769
+      },
+      "updated_at": "2025-11-30T09:37:41.883850Z",
+      "train_rows": 7251,
+      "history_rows": 0
+    },
+    {
+      "model_name": "linear_regression",
+      "model_filename": "linear_regression_BengaluruHouse.pkl",
+      "metrics": {
+        "rmse": 31.25447987739273,
+        "mape": 20.986669035200872,
+        "cv_r2": 0.8308727968926519
+      },
+      "updated_at": "2025-11-30T10:27:03.674411Z",
+      "train_rows": 7331,
+      "history_rows": 80
+    }
+  ]
+}

@@ -34,34 +34,88 @@ def _run_model_training() -> str:
     from src.modeling import ModelTrainer
 
     data_path = ROOT_DIR / "data" / "Bengaluru_House_Data.csv"
+    history_path = ROOT_DIR / "demo" / "backend" / "storage" / "houses.json"
+    metrics_path = ROOT_DIR / "models" / "metrics.json"
     if not data_path.exists():
         raise FileNotFoundError(f"Khong tim thay data tai {data_path}")
 
     trainer = ModelTrainer()
-    models, metrics = trainer.train_models(str(data_path))
-    best_file = trainer.save_artifacts(models, metrics, model_dir=ROOT_DIR / "models")
-    # Cho HousePriceService biet model nao da duoc luu.
-    os.environ["HOUSE_MODEL_FILENAME"] = best_file
+    models, metrics = trainer.train_models(str(data_path), history_path=history_path)
+    best_name = trainer.select_best_model(metrics)
+    best_metric = metrics[best_name]
+    saved_metrics = trainer.load_saved_metrics(metrics_path)
+    should_save = trainer.should_replace_model(best_metric, saved_metrics)
+
+    old_rmse = None
+    old_cv_r2 = None
+    if saved_metrics and isinstance(saved_metrics.get("metrics"), dict):
+        try:
+            old_rmse = float(saved_metrics["metrics"].get("rmse"))
+        except (TypeError, ValueError):
+            old_rmse = None
+        try:
+            old_cv_r2 = (
+                float(saved_metrics["metrics"].get("cv_r2"))
+                if saved_metrics["metrics"].get("cv_r2") is not None
+                else None
+            )
+        except (TypeError, ValueError):
+            old_cv_r2 = None
+
+    best_file: str | None = None
+    if should_save:
+        best_file = trainer.save_artifacts(
+            models,
+            metrics,
+            model_dir=ROOT_DIR / "models",
+            best_name=best_name,
+        )
+        trainer.save_metrics_file(
+            metrics_path=metrics_path,
+            model_name=best_name,
+            model_filename=best_file,
+            metrics=best_metric,
+            train_rows=trainer.last_training_rows,
+            history_rows=trainer.history_rows_used,
+        )
+        os.environ["HOUSE_MODEL_FILENAME"] = best_file
+        print("Updated model, RMSE improved")
+    else:
+        best_file = (saved_metrics or {}).get("model_filename")
+        # Keep env var aligned with the model we decided to keep.
+        if best_file:
+            os.environ["HOUSE_MODEL_FILENAME"] = best_file
+        print("Model not improved, keep old one")
+
+    if not best_file:
+        best_file = os.getenv("HOUSE_MODEL_FILENAME") or "linear_regression_BengaluruHouse.pkl"
+    os.environ.setdefault("HOUSE_MODEL_FILENAME", best_file)
 
     # Xay dung danh sach location theo tan suat va luu vao storage cho frontend/backend.
-    df_clean = trainer.preprocessor.clean_dataframe(trainer.preprocessor.load_raw(str(data_path)))
-    counts = df_clean["location"].value_counts()
-    locations_payload = [
-        {"name": name, "count": int(count)}
-        for name, count in counts.items()
-        if name != "other"
-    ]
-    location_service.save_locations(locations_payload)
+    if should_save and trainer.latest_training_df is not None:
+        counts = trainer.latest_training_df["location"].value_counts()
+        locations_payload = [
+            {"name": name, "count": int(count)}
+            for name, count in counts.items()
+            if name != "other"
+        ]
+        location_service.save_locations(locations_payload)
 
     # In ket qua huan luyen ra console de de quan sat.
+    print(
+        f"Training rows={trainer.last_training_rows}, "
+        f"history_used={trainer.history_rows_used}, "
+        f"CV_R2_old={old_cv_r2 if old_cv_r2 is not None else 'n/a'}, "
+        f"CV_R2_new={best_metric.cv_r2 if best_metric.cv_r2 is not None else 'n/a'}"
+    )
     for name, metric in metrics.items():
         cv_display = f"{metric.cv_r2:.3f}" if metric.cv_r2 is not None else "n/a"
         print(
-            f"{name}: RMSE={metric.rmse:.2f}, MAE={metric.mae:.2f}, "
-            f"R2={metric.r2:.3f}, CV_R2={cv_display}"
+            f"{name}: RMSE={metric.rmse:.2f}, "
+            f"MAPE={metric.mape:.2f}, CV_R2={cv_display}"
         )
-    print(f"Saved best model as: {best_file}")
-    return best_file
+    print(f"Best model candidate: {best_name}")
+    return best_file or ""
 
 
 from backend.routes.chat_routes import chat_bp

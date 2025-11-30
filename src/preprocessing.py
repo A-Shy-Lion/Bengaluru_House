@@ -75,6 +75,10 @@ class BengaluruPreprocessor:
     def fit_transform(self, df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.Series]:
         """Clean the dataset and return model-ready features and targets."""
         cleaned = self.clean_dataframe(df)
+        return self.fit_transform_cleaned(cleaned)
+
+    def fit_transform_cleaned(self, cleaned: pd.DataFrame) -> Tuple[pd.DataFrame, pd.Series]:
+        """Build features from an already-cleaned dataframe without re-filtering."""
         self.location_categories = sorted([loc for loc in cleaned["location"].unique() if loc != "other"])
         X, y = self._build_features(cleaned)
         self.feature_columns = list(X.columns)
